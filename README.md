@@ -1,0 +1,1 @@
+# solar-panel-fault-detection
