@@ -1,113 +1,91 @@
-# Solar Panel Fault Detection
+# Solar Panel Fault Detection System
 
-An end-to-end deep learning system for detecting faults in solar panels using computer vision. The system can identify six different categories of solar panel conditions:
-- Bird droppings
-- Clean panels
-- Dusty panels
-- Electrical damage
-- Physical damage
-- Snow coverage
+A deep learning system for detecting and classifying faults in solar panels using computer vision.
 
 ## Features
 
-- **Advanced Model Architecture**: Uses EfficientNetB0 with custom top layers for efficient and accurate fault detection
-- **Data Pipeline**: Automated data preparation with advanced augmentation techniques
-- **Model Monitoring**: Real-time performance monitoring and metrics tracking
-- **Optimization**: Multiple optimization techniques including TensorRT, quantization, and graph optimization
-- **API Endpoints**: RESTful API with both single image and batch prediction capabilities
-- **Performance Dashboard**: Real-time monitoring of model performance and resource usage
+- 🔍 Real-time fault detection
+- 📊 Interactive web interface built with Streamlit
+- 🚀 RESTful API with batch processing support
+- 📈 Real-time performance monitoring
+- 🎯 Support for 6 fault categories
+- ⚡ GPU-accelerated inference
+- 📱 Mobile-friendly interface
 
-## Project Structure
+## Quick Start
 
-```
-├── src/
-│   └── solar_panel_detector/
-│       ├── components/      # Core components
-│       ├── config/         # Configuration management
-│       ├── utils/          # Utility functions
-│       └── pipeline/       # Training and inference pipelines
-├── scripts/               # Training and evaluation scripts
-├── tests/                # Test suites
-├── artifacts/            # Model artifacts and metrics
-└── Faulty_solar_panel/  # Dataset directory
-```
-
-## Setup
-
-1. Create a virtual environment:
+1. Clone the repository:
 ```bash
-make setup
+git clone https://github.com/yourusername/solar-panel-fault-detection.git
+cd solar-panel-fault-detection
 ```
 
-2. Configure environment variables:
+2. Create and activate virtual environment:
 ```bash
-cp .env.example .env
-# Edit .env with your configurations
+python -m venv venv
+.\venv\Scripts\activate  # Windows
+source venv/bin/activate  # Linux/Mac
 ```
 
-3. Install additional dependencies (optional):
+3. Install dependencies:
 ```bash
-pip install -e .[dev]  # Install development dependencies
+pip install -r requirements.txt
 ```
 
-## Training
-
-1. Run the training pipeline:
+4. Start both the API and web interface:
 ```bash
-make train
+python start_apps.py
 ```
 
-2. Run hyperparameter optimization:
+This will open:
+- Web Interface: http://localhost:8501
+- API Documentation: http://localhost:5000/docs
+
+## Supported Fault Categories
+
+1. 🦅 Bird droppings
+2. ✨ Clean panels (no faults)
+3. 🌫️ Dusty panels
+4. ⚡ Electrical damage
+5. 💢 Physical damage
+6. ❄️ Snow coverage
+
+## System Architecture
+
+### Components
+
+- **Frontend**: Streamlit web interface
+- **Backend**: Flask RESTful API
+- **Model**: EfficientNetB0 with custom top layers
+- **Monitoring**: Real-time performance tracking
+- **Storage**: Local file system + SQLite for metrics
+
+### Technologies Used
+
+- Python 3.8+
+- TensorFlow 2.x
+- Flask + Flask-RESTx
+- Streamlit
+- OpenCV
+- Plotly
+- MLflow
+
+## Development Setup
+
+1. Install development dependencies:
 ```bash
-python scripts/optimize_model.py
+pip install -e ".[dev]"
 ```
 
-3. Evaluate model performance:
+2. Install pre-commit hooks:
 ```bash
-make evaluate
+pre-commit install
 ```
 
-## Deployment
-
-### Local Development
-
-1. Run the Flask application:
+3. Run tests:
 ```bash
-python app.py
+pytest tests/
 ```
-
-2. Access the API endpoints:
-- Health check: `GET /health`
-- Single prediction: `POST /predict`
-- Batch prediction: `POST /batch_predict`
-- Metrics: `GET /metrics`
-- Dashboard: `GET /dashboard`
-
-### Docker Deployment
-
-1. Build the Docker image:
-```bash
-make docker-build
-```
-
-2. Run the container:
-```bash
-make docker-run
-```
-
-### Render Deployment
-
-1. Fork this repository
-
-2. Connect to Render:
-   - Create a new Web Service
-   - Connect your repository
-   - Choose "Docker" as the environment
-   - Use the following environment variables:
-     - `PORT`: 10000
-     - `GOOGLE_API_KEY`: Your Google API key (for data collection)
-     - `WANDB_API_KEY`: Your Weights & Biases API key
-     - `MLFLOW_TRACKING_URI`: MLflow tracking URI
 
 ## API Documentation
 
@@ -118,20 +96,6 @@ curl -X POST http://localhost:5000/predict \
   -F "image=@/path/to/image.jpg"
 ```
 
-Response:
-```json
-{
-  "prediction": "Clean",
-  "confidence": 0.95,
-  "inference_time_ms": 150,
-  "top_3_predictions": [
-    {"class": "Clean", "confidence": 0.95},
-    {"class": "Dusty", "confidence": 0.03},
-    {"class": "Bird-drop", "confidence": 0.02}
-  ]
-}
-```
-
 ### Batch Prediction
 
 ```bash
@@ -140,49 +104,85 @@ curl -X POST http://localhost:5000/batch_predict \
   -F "images=@/path/to/image2.jpg"
 ```
 
-Response:
-```json
-{
-  "results": [
-    {
-      "prediction": "Clean",
-      "confidence": 0.95,
-      "top_3_predictions": [...]
-    },
-    {
-      "prediction": "Dusty",
-      "confidence": 0.87,
-      "top_3_predictions": [...]
-    }
-  ],
-  "inference_time_ms": 250,
-  "batch_size": 2
-}
+### Performance Metrics
+
+```bash
+curl http://localhost:5000/metrics
 ```
-
-## Performance Monitoring
-
-Access the performance dashboard at `http://localhost:5000/dashboard` to view:
-- Inference time distribution
-- Predictions by class
-- Resource usage (CPU, Memory, GPU)
-- Batch size distribution
 
 ## Model Performance
 
-Current model performance metrics:
 - Average inference time: ~150ms
-- P95 inference time: ~200ms
-- Throughput: ~200 images/second
-- Accuracy: >90% (varies by class)
+- Batch processing: Up to 32 images
+- GPU utilization: Optimized for NVIDIA GPUs
+- CPU fallback: Automatically detects available hardware
+
+## Configuration
+
+### Environment Variables
+
+Create a `.env` file based on `.env.example`:
+```bash
+cp .env.example .env
+```
+
+Key configurations:
+- `PORT`: API port (default: 5000)
+- `MODEL_BATCH_SIZE`: Maximum batch size
+- `ENABLE_GPU`: Enable/disable GPU acceleration
+
+### Streamlit Configuration
+
+Located in `.streamlit/config.toml`:
+- Theme customization
+- Server settings
+- Security configurations
+
+## Docker Support
+
+1. Build the image:
+```bash
+docker build -t solar-panel-detector .
+```
+
+2. Run the container:
+```bash
+docker run -p 5000:5000 -p 8501:8501 solar-panel-detector
+```
+
+## Deployment
+
+### Render Deployment
+
+1. Fork this repository
+2. Connect to Render
+3. Add required environment variables
+4. Deploy using the provided `render.yaml`
+
+### Local Deployment
+
+Use `waitress` (Windows) or `gunicorn` (Linux) for production:
+```bash
+# Windows
+waitress-serve --port=5000 app:app
+
+# Linux
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
 
 ## Contributing
 
 1. Fork the repository
 2. Create your feature branch
-3. Run tests: `make test`
+3. Run tests: `pytest tests/`
 4. Submit a pull request
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## Contact
+
+- Author: Your Name
+- Email: your.email@example.com
+- GitHub: [@yourusername](https://github.com/yourusername)
