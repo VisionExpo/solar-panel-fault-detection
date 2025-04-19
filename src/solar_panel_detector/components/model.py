@@ -66,13 +66,32 @@ class SolarPanelModel:
         return model
 
     def train(self, train_ds, val_ds, label_mapping):
-        """Train the model with advanced callbacks and monitoring"""
+        """Train the model with advanced callbacks, monitoring, and class weights"""
         # Create model directory
         self.config.model.model_dir.mkdir(parents=True, exist_ok=True)
 
+        # Calculate class weights to handle imbalance
+        class_counts = {}
+        for _, labels in train_ds:
+            for label in labels.numpy():
+                if label not in class_counts:
+                    class_counts[label] = 0
+                class_counts[label] += 1
+
+        total_samples = sum(class_counts.values())
+        num_classes = len(class_counts)
+
+        # Compute balanced class weights
+        class_weights = {}
+        for class_idx, count in class_counts.items():
+            # Formula: total_samples / (num_classes * count)
+            class_weights[class_idx] = total_samples / (num_classes * count)
+
+        logger.info(f"Using class weights: {class_weights}")
+
         # Start nested MLflow run
         with mlflow.start_run(nested=True):
-            # Initialize callbacks
+            # Initialize callbacks with improved learning rate schedule
             callbacks = [
                 tf.keras.callbacks.ModelCheckpoint(
                     str(self.config.model.best_model_path),
@@ -87,8 +106,13 @@ class SolarPanelModel:
                 tf.keras.callbacks.ReduceLROnPlateau(
                     monitor='val_loss',
                     factor=0.2,
-                    patience=3,
-                    min_lr=1e-6
+                    patience=2,  # More aggressive LR reduction
+                    min_lr=1e-7
+                ),
+                # Add TensorBoard callback for better visualization
+                tf.keras.callbacks.TensorBoard(
+                    log_dir=str(self.config.model.model_dir / 'logs'),
+                    histogram_freq=1
                 )
             ]
 
@@ -103,7 +127,8 @@ class SolarPanelModel:
                         "epochs": self.config.model.epochs,
                         "batch_size": self.config.model.batch_size,
                         "img_size": self.config.model.img_size,
-                        "architecture": "EfficientNetB0"
+                        "architecture": "EfficientNetB0",
+                        "class_weights": class_weights
                     }
                 )
                 callbacks.append(wandb.keras.WandbMetricsLogger())
@@ -112,12 +137,16 @@ class SolarPanelModel:
                 logger.warning(f"WandB initialization failed, continuing without WandB logging: {str(e)}")
                 wandb_enabled = False
 
-            # Train model
+            # Log class weights to MLflow
+            mlflow.log_params({f"class_weight_{k}": v for k, v in class_weights.items()})
+
+            # Train model with class weights
             self.history = self.model.fit(
                 train_ds,
                 validation_data=val_ds,
                 epochs=self.config.model.epochs,
-                callbacks=callbacks
+                callbacks=callbacks,
+                class_weight=class_weights  # Apply class weights
             )
 
             # Save label mapping
