@@ -1,115 +1,157 @@
 import os
 import requests
-from selenium import webdriver
-from selenium.webdriver.common.by import By
-import time
+from pathlib import Path
+import logging
 from ..utils.logger import logger
 from ..config.configuration import Config
-from pathlib import Path
-import shutil
-from typing import List, Dict
-import concurrent.futures
+from bs4 import BeautifulSoup
+import urllib.parse
+import time
+from concurrent.futures import ThreadPoolExecutor
+from typing import Dict, List
+import hashlib
+from PIL import Image
+import io
 
 class DataIngestion:
     def __init__(self, config: Config):
         self.config = config
-        self.categories = ['Bird-drop', 'Clean', 'Dusty', 'Electrical-damage', 'Physical-Damage', 'Snow-Covered']
-        self.download_dir = Path("downloads")
-        self.download_dir.mkdir(exist_ok=True)
-
+        self.categories = [
+            'Bird-drop', 'Clean', 'Dusty', 
+            'Electrical-damage', 'Physical-Damage', 'Snow-Covered'
+        ]
+        self.headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        
     def count_category_data(self) -> Dict[str, int]:
-        """Count images in each category"""
+        """Count existing images for each category"""
         counts = {}
         for category in self.categories:
-            category_path = self.config.data.data_dir / category
+            category_path = Path(self.config.data.data_dir) / category
             if category_path.exists():
-                counts[category] = len(list(category_path.glob('*.[jJ][pP][gG]')))
-                counts[category] += len(list(category_path.glob('*.[jJ][pP][eE][gG]')))
-                logger.info(f"Category {category}: {counts[category]} images")
+                image_files = list(category_path.glob('*.[jJ][pP][gG]')) + \
+                            list(category_path.glob('*.[jJ][pP][eE][gG]'))
+                counts[category] = len(image_files)
+            else:
+                counts[category] = 0
         return counts
-
-    def _download_image(self, url: str, save_path: Path) -> bool:
-        """Download a single image from URL"""
+    
+    def download_image(self, url: str, save_path: Path) -> bool:
+        """Download and validate a single image"""
         try:
-            response = requests.get(url, stream=True, timeout=10)
+            response = requests.get(url, headers=self.headers, timeout=10)
             if response.status_code == 200:
-                with open(save_path, 'wb') as f:
-                    response.raw.decode_content = True
-                    shutil.copyfileobj(response.raw, f)
-                return True
-        except Exception as e:
-            logger.error(f"Error downloading {url}: {str(e)}")
-        return False
-
-    def scrape_images(self, query: str, max_images: int = 5000) -> List[str]:
-        """Scrape images from web search engines"""
-        try:
-            from selenium.webdriver.chrome.options import Options
-            chrome_options = Options()
-            chrome_options.add_argument('--headless')
-            chrome_options.add_argument('--no-sandbox')
-            
-            driver = webdriver.Chrome(options=chrome_options)
-            image_urls = []
-            
-            search_url = f"https://www.google.com/search?q={query}&tbm=isch"
-            driver.get(search_url)
-            
-            last_height = driver.execute_script("return document.body.scrollHeight")
-            while len(image_urls) < max_images:
-                driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                time.sleep(2)
-                
-                new_height = driver.execute_script("return document.body.scrollHeight")
-                if new_height == last_height:
-                    break
-                last_height = new_height
-                
-                images = driver.find_elements(By.CSS_SELECTOR, "img.rg_i")
-                current_urls = [img.get_attribute('src') for img in images if img.get_attribute('src')]
-                image_urls.extend(current_urls)
-                
-                if len(image_urls) >= max_images:
-                    image_urls = image_urls[:max_images]
-                    break
+                # Validate image
+                try:
+                    img = Image.open(io.BytesIO(response.content))
+                    img = img.convert('RGB')  # Convert to RGB if needed
                     
-            driver.quit()
-            return image_urls
+                    # Basic image validation
+                    if img.size[0] < 100 or img.size[1] < 100:
+                        return False
+                    
+                    # Save image
+                    img.save(save_path)
+                    return True
+                except:
+                    return False
+            return False
+        except:
+            return False
             
-        except Exception as e:
-            logger.error(f"Error in web scraping: {str(e)}")
-            return []
-
-    def download_category_images(self, category: str):
-        """Download images for a specific category"""
-        save_dir = self.download_dir / category
-        save_dir.mkdir(exist_ok=True)
+    def search_images(self, query: str, max_results: int = 100) -> List[str]:
+        """Search for images using multiple search engines"""
+        image_urls = set()
         
-        current_count = self.count_category_data().get(category, 0)
-        if current_count >= 5000:
-            logger.info(f"Category {category} already has sufficient images")
+        # List of search APIs (you would need to add your own API keys)
+        search_engines = [
+            {
+                'name': 'Google Custom Search',
+                'url': 'https://www.googleapis.com/customsearch/v1',
+                'params': {
+                    'key': os.getenv('GOOGLE_API_KEY'),
+                    'cx': os.getenv('GOOGLE_CSE_ID'),
+                    'searchType': 'image',
+                    'q': query
+                }
+            },
+            # Add more search engines as needed
+        ]
+        
+        for engine in search_engines:
+            try:
+                response = requests.get(engine['url'], params=engine['params'])
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'items' in data:
+                        for item in data['items']:
+                            if len(image_urls) >= max_results:
+                                break
+                            image_urls.add(item['link'])
+            except Exception as e:
+                logger.error(f"Error searching images with {engine['name']}: {str(e)}")
+                
+        return list(image_urls)[:max_results]
+    
+    def download_category_images(self, category: str, target_count: int = 5000):
+        """Download images for a specific category"""
+        logger.info(f"Downloading images for category: {category}")
+        
+        # Create category directory
+        category_path = Path(self.config.data.data_dir) / category
+        category_path.mkdir(parents=True, exist_ok=True)
+        
+        # Count existing images
+        existing_count = len(list(category_path.glob('*.[jJ][pP][gG]'))) + \
+                        len(list(category_path.glob('*.[jJ][pP][eE][gG]')))
+        
+        if existing_count >= target_count:
+            logger.info(f"Category {category} already has {existing_count} images")
             return
         
-        needed_images = 5000 - current_count
-        query = f"solar panel {category.lower()} fault"
-        urls = self.scrape_images(query, needed_images)
+        # Calculate how many more images we need
+        needed_count = target_count - existing_count
         
-        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
-            future_to_url = {
-                executor.submit(
-                    self._download_image, 
-                    url, 
-                    save_dir / f"{category}_{i}.jpg"
-                ): url for i, url in enumerate(urls)
-            }
-            
-            for future in concurrent.futures.as_completed(future_to_url):
-                url = future_to_url[future]
-                try:
-                    success = future.result()
-                    if success:
-                        logger.info(f"Successfully downloaded image from {url}")
-                    else:
-                        logger.warning(f"Failed to download image from {url}")
-                except Exception as e:
-                    logger.error(f"Error processing {url}: {str(e)}")
+        # Generate search queries
+        search_queries = [
+            f"solar panel {category.lower()}",
+            f"solar panel {category.lower()} fault",
+            f"photovoltaic panel {category.lower()}",
+            f"solar module {category.lower()} damage"
+        ]
+        
+        downloaded_count = 0
+        failed_urls = set()
+        
+        with ThreadPoolExecutor(max_workers=10) as executor:
+            for query in search_queries:
+                if downloaded_count >= needed_count:
+                    break
+                    
+                image_urls = self.search_images(query, max_results=needed_count)
+                
+                for url in image_urls:
+                    if downloaded_count >= needed_count:
+                        break
+                        
+                    if url in failed_urls:
+                        continue
+                    
+                    # Generate filename from URL
+                    url_hash = hashlib.md5(url.encode()).hexdigest()
+                    image_path = category_path / f"{category}_{url_hash}.jpg"
+                    
+                    if not image_path.exists():
+                        future = executor.submit(self.download_image, url, image_path)
+                        if future.result():
+                            downloaded_count += 1
+                            logger.info(f"Downloaded {downloaded_count}/{needed_count} for {category}")
+                        else:
+                            failed_urls.add(url)
+                    
+                    # Add delay to avoid hitting rate limits
+                    time.sleep(0.1)
+        
+        logger.info(f"Completed downloading {downloaded_count} images for {category}")
+        return downloaded_count
