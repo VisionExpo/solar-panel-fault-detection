@@ -29,7 +29,8 @@ class TrainingConfig:
     experiment_name: str = "solar_panel_fault_detection"
     run_name: str = "baseline_run"
     wandb_project: str = "solar_panel_fault_detection"
-    
+    wandb_entity: str = "gorulevishal984"  # Add your wandb username here instead of organization
+
 @dataclass
 class AugmentationConfig:
     rotation_range: int = 20
