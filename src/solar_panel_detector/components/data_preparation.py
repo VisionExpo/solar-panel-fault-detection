@@ -14,7 +14,8 @@ class DataPreparation:
         self.config = config
         self.transform = A.Compose([
             A.RandomRotate90(p=0.5),
-            A.Flip(p=0.5),
+            A.HorizontalFlip(p=0.5),
+            A.VerticalFlip(p=0.5),
             A.Transpose(p=0.5),
             A.OneOf([
                 A.IAAAdditiveGaussianNoise(),
