@@ -30,12 +30,12 @@ class DataIngestion:
         ]
         # Target counts per category (more realistic numbers)
         self.target_counts = {
-            'Bird-drop': 500,
+            'Bird-drop': 950,
             'Clean': 1000,  # More clean examples as baseline
-            'Dusty': 500,
-            'Electrical-damage': 300,
-            'Physical-Damage': 300,
-            'Snow-Covered': 300
+            'Dusty': 950,
+            'Electrical-damage': 950,
+            'Physical-Damage': 950,
+            'Snow-Covered': 950
         }
 
     def get_random_user_agent(self):
