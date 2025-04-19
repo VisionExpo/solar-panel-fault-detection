@@ -12,6 +12,7 @@ from typing import Dict, List
 import hashlib
 from PIL import Image
 import io
+import random
 
 class DataIngestion:
     def __init__(self, config: Config):
@@ -20,9 +21,24 @@ class DataIngestion:
             'Bird-drop', 'Clean', 'Dusty', 
             'Electrical-damage', 'Physical-Damage', 'Snow-Covered'
         ]
-        self.headers = {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        # Rotate between different user agents to avoid blocking
+        self.user_agents = [
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Firefox/89.0',
+            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.1.1 Safari/605.1.15'
+        ]
+        # Target counts per category (more realistic numbers)
+        self.target_counts = {
+            'Bird-drop': 500,
+            'Clean': 1000,  # More clean examples as baseline
+            'Dusty': 500,
+            'Electrical-damage': 300,
+            'Physical-Damage': 300,
+            'Snow-Covered': 300
         }
+        
+    def get_random_user_agent(self):
+        return random.choice(self.user_agents)
         
     def count_category_data(self) -> Dict[str, int]:
         """Count existing images for each category"""
@@ -40,19 +56,31 @@ class DataIngestion:
     def download_image(self, url: str, save_path: Path) -> bool:
         """Download and validate a single image"""
         try:
-            response = requests.get(url, headers=self.headers, timeout=10)
+            headers = {'User-Agent': self.get_random_user_agent()}
+            response = requests.get(url, headers=headers, timeout=10)
             if response.status_code == 200:
                 # Validate image
                 try:
                     img = Image.open(io.BytesIO(response.content))
                     img = img.convert('RGB')  # Convert to RGB if needed
                     
-                    # Basic image validation
+                    # Enhanced image validation
                     if img.size[0] < 100 or img.size[1] < 100:
+                        return False
+                    if img.size[0] > 4000 or img.size[1] > 4000:  # Skip very large images
+                        return False
+                        
+                    # Resize if too large while maintaining aspect ratio
+                    if img.size[0] > 1024 or img.size[1] > 1024:
+                        img.thumbnail((1024, 1024), Image.LANCZOS)
+                    
+                    # Basic quality check (skip mostly black/white images)
+                    img_array = np.array(img)
+                    if np.mean(img_array) < 20 or np.mean(img_array) > 235:
                         return False
                     
                     # Save image
-                    img.save(save_path)
+                    img.save(save_path, quality=85, optimize=True)  # Optimize file size
                     return True
                 except:
                     return False
@@ -63,6 +91,7 @@ class DataIngestion:
     def search_images(self, query: str, max_results: int = 100) -> List[str]:
         """Search for images using multiple search engines"""
         image_urls = set()
+        headers = {'User-Agent': self.get_random_user_agent()}
         
         # Try Google Custom Search if API keys are available
         google_api_key = os.getenv('GOOGLE_API_KEY')
@@ -76,61 +105,62 @@ class DataIngestion:
                         'key': google_api_key,
                         'cx': google_cse_id,
                         'searchType': 'image',
-                        'q': query
+                        'q': query,
+                        'num': 10  # Max allowed by API
                     }
                 )
                 if response.status_code == 200:
                     data = response.json()
                     if 'items' in data:
                         for item in data['items']:
-                            if len(image_urls) >= max_results:
-                                break
                             image_urls.add(item['link'])
             except Exception as e:
                 logger.error(f"Error using Google Custom Search: {str(e)}")
         
-        # If we still need more images, try DuckDuckGo
-        if len(image_urls) < max_results:
-            try:
-                # DuckDuckGo image search
-                ddg_url = f"https://duckduckgo.com/?q={urllib.parse.quote(query)}&iax=images&ia=images"
-                response = requests.get(ddg_url, headers=self.headers)
+        # Try Bing
+        try:
+            bing_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query)}&qft=+filterui:photo-photo&first=1&count=100"
+            response = requests.get(bing_url, headers=headers)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                for img in soup.select('img.mimg'):
+                    if 'src' in img.attrs:
+                        image_urls.add(img['src'])
                 
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    image_elements = soup.select('img[data-src]')
-                    
-                    for img in image_elements:
-                        if len(image_urls) >= max_results:
-                            break
-                        if 'src' in img.attrs:
-                            image_urls.add(img['src'])
-                        elif 'data-src' in img.attrs:
-                            image_urls.add(img['data-src'])
-            except Exception as e:
-                logger.error(f"Error using DuckDuckGo search: {str(e)}")
+                # Try to extract more image URLs from the JSON data in the page
+                for script in soup.find_all('script'):
+                    if 'iurl' in str(script):
+                        import re
+                        urls = re.findall(r'"iurl":"([^"]+)"', str(script))
+                        image_urls.update(urls)
+        except Exception as e:
+            logger.error(f"Error using Bing search: {str(e)}")
         
-        # If still need more images, try Bing
-        if len(image_urls) < max_results:
-            try:
-                bing_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query)}&qft=+filterui:photo-photo"
-                response = requests.get(bing_url, headers=self.headers)
+        # Try DuckDuckGo
+        try:
+            ddg_url = f"https://duckduckgo.com/?q={urllib.parse.quote(query)}&iax=images&ia=images"
+            response = requests.get(ddg_url, headers=headers)
+            
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.text, 'html.parser')
+                for img in soup.select('img[data-src]'):
+                    if 'data-src' in img.attrs:
+                        image_urls.add(img['data-src'])
+        except Exception as e:
+            logger.error(f"Error using DuckDuckGo search: {str(e)}")
+        
+        # Clean and validate URLs
+        valid_urls = []
+        for url in image_urls:
+            if url.startswith('//'):
+                url = 'https:' + url
+            if url.startswith('http'):
+                valid_urls.append(url)
                 
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.text, 'html.parser')
-                    image_elements = soup.select('.mimg')
-                    
-                    for img in image_elements:
-                        if len(image_urls) >= max_results:
-                            break
-                        if 'src' in img.attrs:
-                            image_urls.add(img['src'])
-            except Exception as e:
-                logger.error(f"Error using Bing search: {str(e)}")
-        
-        return list(image_urls)[:max_results]
+        return list(set(valid_urls))[:max_results]
     
-    def download_category_images(self, category: str, target_count: int = 5000):
+    def download_category_images(self, category: str):
         """Download images for a specific category"""
         logger.info(f"Downloading images for category: {category}")
         
@@ -142,30 +172,31 @@ class DataIngestion:
         existing_count = len(list(category_path.glob('*.[jJ][pP][gG]'))) + \
                         len(list(category_path.glob('*.[jJ][pP][eE][gG]')))
         
+        target_count = self.target_counts[category]
         if existing_count >= target_count:
-            logger.info(f"Category {category} already has {existing_count} images")
+            logger.info(f"Category {category} already has {existing_count} images (target: {target_count})")
             return
         
         # Calculate how many more images we need
         needed_count = target_count - existing_count
         
-        # Generate search queries
-        search_queries = [
-            f"solar panel {category.lower()}",
-            f"solar panel {category.lower()} fault",
-            f"photovoltaic panel {category.lower()}",
-            f"solar module {category.lower()} damage"
-        ]
+        # Generate search queries based on category
+        search_queries = self._get_search_queries(category)
         
         downloaded_count = 0
         failed_urls = set()
         
-        with ThreadPoolExecutor(max_workers=10) as executor:
+        with ThreadPoolExecutor(max_workers=5) as executor:  # Reduced workers to avoid rate limiting
             for query in search_queries:
                 if downloaded_count >= needed_count:
                     break
-                    
+                
+                logger.info(f"Searching with query: {query}")
                 image_urls = self.search_images(query, max_results=needed_count)
+                
+                if not image_urls:
+                    logger.warning(f"No images found for query: {query}")
+                    continue
                 
                 for url in image_urls:
                     if downloaded_count >= needed_count:
@@ -186,8 +217,69 @@ class DataIngestion:
                         else:
                             failed_urls.add(url)
                     
-                    # Add delay to avoid hitting rate limits
-                    time.sleep(0.1)
+                    # Random delay between 1-3 seconds
+                    time.sleep(random.uniform(1, 3))
         
         logger.info(f"Completed downloading {downloaded_count} images for {category}")
         return downloaded_count
+
+    def _get_search_queries(self, category: str) -> List[str]:
+        """Generate search queries based on category"""
+        base_queries = {
+            'Bird-drop': [
+                'solar panel bird droppings',
+                'solar panel bird waste damage',
+                'bird droppings on solar panels',
+                'solar panel bird mess',
+                'solar panel bird contamination',
+                'pv panel bird droppings',
+                'photovoltaic panel bird waste'
+            ],
+            'Clean': [
+                'clean solar panel',
+                'new solar panel installation',
+                'pristine solar panel',
+                'well maintained solar panel',
+                'solar panel perfect condition',
+                'clean photovoltaic panel',
+                'solar panel after cleaning'
+            ],
+            'Dusty': [
+                'dusty solar panel',
+                'dirty solar panel',
+                'solar panel dust accumulation',
+                'solar panel sand dust',
+                'solar panel desert dust',
+                'solar panel dirt build up',
+                'solar panel dust coating'
+            ],
+            'Electrical-damage': [
+                'solar panel electrical damage',
+                'solar panel hotspot damage',
+                'damaged solar cell electrical',
+                'solar panel burn mark',
+                'solar panel electrical fault',
+                'solar panel circuit damage',
+                'solar panel electrical burn'
+            ],
+            'Physical-Damage': [
+                'broken solar panel',
+                'cracked solar panel',
+                'solar panel physical damage',
+                'solar panel hail damage',
+                'solar panel storm damage',
+                'solar panel crack',
+                'damaged solar panel glass'
+            ],
+            'Snow-Covered': [
+                'snow covered solar panel',
+                'solar panel snow',
+                'solar panel winter snow',
+                'snow on solar panels',
+                'solar panel ice snow',
+                'solar array snow covered',
+                'snowy solar panels'
+            ]
+        }
+        
+        return base_queries.get(category, [])
