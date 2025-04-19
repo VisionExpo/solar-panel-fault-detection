@@ -1,6 +1,6 @@
 import tensorflow as tf
 from tensorflow.keras import layers, models
-from tensorflow.keras.applications import EfficientNetB0
+from tensorflow.keras.applications import EfficientNetB0, EfficientNetV2S
 import mlflow
 import wandb
 from ..utils.logger import logger
@@ -11,6 +11,7 @@ import numpy as np
 from sklearn.metrics import confusion_matrix, classification_report
 from pathlib import Path
 import json
+from ..utils.losses import FocalLoss, weighted_categorical_crossentropy
 
 class SolarPanelModel:
     def __init__(self, config: Config):
