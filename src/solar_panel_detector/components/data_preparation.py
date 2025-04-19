@@ -19,18 +19,18 @@ class DataPreparation:
             A.VerticalFlip(p=0.5),
             A.Transpose(p=0.5),
             A.OneOf([
-                A.GaussNoise(var_limit=(10.0, 50.0)),
+                A.GaussNoise(p=0.5),
                 A.GaussianBlur(blur_limit=(3, 7)),
             ], p=0.2),
             A.OneOf([
-                A.MotionBlur(blur_limit=3, p=0.2),
-                A.MedianBlur(blur_limit=3, p=0.1),
-                A.Blur(blur_limit=3, p=0.1),
+                A.MotionBlur(blur_limit=3),
+                A.MedianBlur(blur_limit=3),
+                A.Blur(blur_limit=3),
             ], p=0.2),
             A.OneOf([
-                A.OpticalDistortion(distort_limit=0.05, shift_limit=0.05, p=0.3),
-                A.GridDistortion(num_steps=5, distort_limit=0.3, p=0.1),
-                A.ElasticTransform(alpha=1, sigma=50, alpha_affine=50, p=0.3),
+                A.OpticalDistortion(distort_limit=0.05),
+                A.GridDistortion(distort_limit=0.3),
+                A.ElasticTransform(alpha=1, sigma=50),
             ], p=0.2),
             A.OneOf([
                 A.CLAHE(clip_limit=2),

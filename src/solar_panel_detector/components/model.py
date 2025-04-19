@@ -4,6 +4,7 @@ import tensorflow_addons as tfa
 from tensorflow.keras.applications import EfficientNetB0
 import mlflow
 import wandb
+from wandb.keras import WandbCallback
 from ..utils.logger import logger
 from ..config.configuration import Config
 import matplotlib.pyplot as plt
