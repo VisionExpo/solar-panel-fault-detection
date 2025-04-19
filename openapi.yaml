@@ -1,0 +1,229 @@
+openapi: 3.0.0
+info:
+  title: Solar Panel Fault Detection API
+  description: API for detecting faults in solar panels using computer vision
+  version: 1.0.0
+  contact:
+    name: Your Name
+    email: your.email@example.com
+
+servers:
+  - url: http://localhost:5000
+    description: Local development server
+  - url: https://solar-panel-detector.onrender.com
+    description: Production server
+
+paths:
+  /health:
+    get:
+      summary: Check service health
+      description: Returns health status and basic metrics of the service
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: number
+                    example: 1682744000
+                  metrics:
+                    type: object
+                    properties:
+                      average_inference_time_ms:
+                        type: number
+                        example: 150.5
+                      predictions_per_class:
+                        type: object
+                        additionalProperties:
+                          type: integer
+                        example:
+                          Clean: 100
+                          Dusty: 50
+                          Bird-drop: 30
+
+  /predict:
+    post:
+      summary: Detect faults in a single solar panel image
+      description: Analyzes a single image and returns fault detection results
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                image:
+                  type: string
+                  format: binary
+      responses:
+        '200':
+          description: Successful prediction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  prediction:
+                    type: string
+                    example: Clean
+                  confidence:
+                    type: number
+                    format: float
+                    example: 0.95
+                  inference_time_ms:
+                    type: number
+                    example: 150.5
+                  top_3_predictions:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        class:
+                          type: string
+                        confidence:
+                          type: number
+                    example:
+                      - class: Clean
+                        confidence: 0.95
+                      - class: Dusty
+                        confidence: 0.03
+                      - class: Bird-drop
+                        confidence: 0.02
+        '400':
+          description: Bad request (e.g., no image provided)
+        '500':
+          description: Internal server error
+
+  /batch_predict:
+    post:
+      summary: Detect faults in multiple solar panel images
+      description: Analyzes multiple images in a single request
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                images:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+      responses:
+        '200':
+          description: Successful batch prediction
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        prediction:
+                          type: string
+                        confidence:
+                          type: number
+                        top_3_predictions:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              class:
+                                type: string
+                              confidence:
+                                type: number
+                  inference_time_ms:
+                    type: number
+                  batch_size:
+                    type: integer
+        '400':
+          description: Bad request (e.g., too many images)
+        '500':
+          description: Internal server error
+
+  /metrics:
+    get:
+      summary: Get model performance metrics
+      description: Returns detailed performance metrics and statistics
+      responses:
+        '200':
+          description: Current performance metrics
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  performance_metrics:
+                    type: object
+                    properties:
+                      average_inference_time_ms:
+                        type: number
+                      p95_inference_time_ms:
+                        type: number
+                      average_batch_size:
+                        type: number
+                      predictions_per_class:
+                        type: object
+                  resource_usage:
+                    type: object
+                    properties:
+                      average_cpu_percent:
+                        type: number
+                      average_memory_percent:
+                        type: number
+                      average_gpu_percent:
+                        type: number
+
+  /dashboard:
+    get:
+      summary: Get performance monitoring dashboard
+      description: Returns an HTML dashboard with performance visualizations
+      responses:
+        '200':
+          description: HTML dashboard
+          content:
+            text/html:
+              schema:
+                type: string
+        '404':
+          description: Dashboard not found
+        '500':
+          description: Error serving dashboard
+
+components:
+  schemas:
+    Prediction:
+      type: object
+      properties:
+        prediction:
+          type: string
+          description: The predicted fault class
+        confidence:
+          type: number
+          format: float
+          description: Confidence score of the prediction
+        top_3_predictions:
+          type: array
+          items:
+            $ref: '#/components/schemas/ClassPrediction'
+    
+    ClassPrediction:
+      type: object
+      properties:
+        class:
+          type: string
+          description: The fault class
+        confidence:
+          type: number
+          format: float
+          description: Confidence score for this class
