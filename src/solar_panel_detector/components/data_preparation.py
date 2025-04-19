@@ -134,18 +134,21 @@ class DataPreparation:
         ])
 
     def load_and_preprocess_image(self, image_path: str) -> np.ndarray:
-        """Load and preprocess a single image"""
+        """Load and preprocess a single image with ImageNet normalization"""
         try:
+            # Read image
             image = cv2.imread(str(image_path))
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            image = cv2.resize(image, self.config.model.img_size)
+            if image is None:
+                logger.error(f"Failed to read image: {image_path}")
+                return None
 
-            # Apply augmentation
+            # Convert to RGB (from BGR)
+            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+
+            # Apply standard augmentation (includes resize and normalization)
             augmented = self.transform(image=image)
             image = augmented['image']
 
-            # Normalize
-            image = image.astype(np.float32) / 255.0
             return image
 
         except Exception as e:
