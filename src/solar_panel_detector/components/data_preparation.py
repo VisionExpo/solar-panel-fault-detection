@@ -13,8 +13,8 @@ from typing import Tuple, Dict
 class DataPreparation:
     def __init__(self, config: Config):
         self.config = config
-        # Enhanced augmentation pipeline with more aggressive transformations
-        # and solar panel specific augmentations
+        # Create two different augmentation pipelines: standard and advanced
+        # Standard augmentation for general training
         self.transform = A.Compose([
             # Geometric transformations
             A.RandomRotate90(p=0.5),
@@ -25,9 +25,9 @@ class DataPreparation:
 
             # Noise and blur - simulate camera quality issues
             A.OneOf([
-                A.GaussNoise(var_limit=(10, 50), p=0.5),
+                A.GaussNoise(p=0.5),
                 A.GaussianBlur(blur_limit=(3, 7)),
-                A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=0.5),
+                A.ISONoise(p=0.5),
             ], p=0.3),
 
             # Motion and focus issues
@@ -35,7 +35,6 @@ class DataPreparation:
                 A.MotionBlur(blur_limit=5),
                 A.MedianBlur(blur_limit=5),
                 A.Blur(blur_limit=5),
-                A.ZoomBlur(max_factor=1.5, p=0.5),
             ], p=0.3),
 
             # Distortions - simulate lens effects
@@ -52,10 +51,8 @@ class DataPreparation:
                 A.Sharpen(alpha=(0.2, 0.5), lightness=(0.5, 1.0)),
                 A.Emboss(alpha=(0.2, 0.5), strength=(0.2, 0.7)),
                 A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.8),
-                A.RandomShadow(shadow_roi=(0, 0, 1, 1), p=0.5),  # Simulate shadows on panels
-                A.RandomSunFlare(flare_roi=(0, 0, 1, 1), angle_lower=0, angle_upper=1,
-                                num_flare_circles_lower=1, num_flare_circles_upper=3,
-                                src_radius=100, src_color=(255, 255, 255), p=0.3),  # Simulate sun reflections
+                A.RandomShadow(p=0.5),  # Simulate shadows on panels
+                A.RandomSunFlare(p=0.3),  # Simulate sun reflections
             ], p=0.5),
 
             # Color shifts - simulate different weather conditions
@@ -68,13 +65,72 @@ class DataPreparation:
 
             # Weather simulations
             A.OneOf([
-                A.RandomRain(slant_lower=-10, slant_upper=10, drop_length=20, drop_width=1, drop_color=(200, 200, 200), p=0.3),  # Rain effect
-                A.RandomSnow(snow_point_lower=0.1, snow_point_upper=0.3, brightness_coeff=2.5, p=0.2),  # Snow effect
-                A.RandomFog(fog_coef_lower=0.3, fog_coef_upper=0.5, alpha_coef=0.1, p=0.2),  # Fog effect
+                A.RandomRain(p=0.3),  # Rain effect
+                A.RandomSnow(p=0.2),  # Snow effect
+                A.RandomFog(p=0.2),  # Fog effect
             ], p=0.3),
 
             # Compression and quality degradation
-            A.ImageCompression(quality_lower=70, quality_upper=100, p=0.3),  # JPEG compression artifacts
+            A.ImageCompression(p=0.3),  # JPEG compression artifacts
+
+            # Resize to match model input size
+            A.Resize(height=self.config.model.img_size[0], width=self.config.model.img_size[1]),
+
+            # Normalize pixel values
+            A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        ])
+
+        # Advanced augmentation for underrepresented classes
+        self.advanced_transform = A.Compose([
+            # More aggressive geometric transformations
+            A.RandomRotate90(p=0.7),
+            A.HorizontalFlip(p=0.7),
+            A.VerticalFlip(p=0.7),
+            A.Transpose(p=0.7),
+            A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.3, rotate_limit=45, p=0.7),
+            A.GridDistortion(p=0.5),
+            A.ElasticTransform(alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03, p=0.5),
+
+            # Cutout and CoarseDropout for robustness
+            A.OneOf([
+                A.Cutout(num_holes=8, max_h_size=32, max_w_size=32, p=0.7),
+                A.CoarseDropout(max_holes=8, max_height=32, max_width=32, p=0.7),
+            ], p=0.5),
+
+            # Heavy color and lighting adjustments
+            A.OneOf([
+                A.RandomBrightnessContrast(brightness_limit=0.5, contrast_limit=0.5, p=0.8),
+                A.HueSaturationValue(hue_shift_limit=30, sat_shift_limit=50, val_shift_limit=50, p=0.8),
+                A.RGBShift(r_shift_limit=30, g_shift_limit=30, b_shift_limit=30, p=0.8),
+                A.ChannelShuffle(p=0.4),
+            ], p=0.7),
+
+            # Weather and environmental effects
+            A.OneOf([
+                A.RandomRain(p=0.5),
+                A.RandomSnow(p=0.5),
+                A.RandomFog(p=0.5),
+                A.RandomSunFlare(p=0.5),
+                A.RandomShadow(p=0.5),
+            ], p=0.6),
+
+            # Noise and blur
+            A.OneOf([
+                A.GaussNoise(p=0.6),
+                A.MultiplicativeNoise(p=0.6),
+                A.ISONoise(p=0.6),
+                A.GaussianBlur(blur_limit=(3, 9), p=0.6),
+                A.MotionBlur(blur_limit=7, p=0.6),
+            ], p=0.6),
+
+            # Compression artifacts
+            A.ImageCompression(quality_lower=50, quality_upper=90, p=0.5),
+
+            # Resize to match model input size
+            A.Resize(height=self.config.model.img_size[0], width=self.config.model.img_size[1]),
+
+            # Normalize pixel values
+            A.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
         ])
 
     def load_and_preprocess_image(self, image_path: str) -> np.ndarray:
@@ -189,12 +245,16 @@ class DataPreparation:
         return train_ds, val_ds, test_ds, label_to_index
 
     def _balance_classes(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-        """Balance classes by augmenting underrepresented classes"""
+        """Balance classes by augmenting underrepresented classes with advanced augmentation"""
         # Count samples per class
         unique_classes, class_counts = np.unique(y, return_counts=True)
         max_samples = np.max(class_counts)
 
+        # Increase the target count for better representation
+        target_samples = int(max_samples * 1.2)  # 20% more samples for all classes
+
         logger.info(f"Class counts before balancing: {dict(zip(unique_classes, class_counts))}")
+        logger.info(f"Target samples per class: {target_samples}")
 
         # Create balanced dataset
         X_balanced = []
@@ -204,34 +264,35 @@ class DataPreparation:
             # Get samples for this class
             cls_indices = np.where(y == cls)[0]
             cls_samples = X[cls_indices]
+            cls_count = len(cls_samples)
 
-            # If we have enough samples, just use them
-            if len(cls_samples) >= max_samples:
-                selected_indices = np.random.choice(len(cls_samples), max_samples, replace=False)
-                X_balanced.extend(cls_samples[selected_indices])
-                y_balanced.extend([cls] * max_samples)
-            else:
-                # Use all original samples
-                X_balanced.extend(cls_samples)
-                y_balanced.extend([cls] * len(cls_samples))
+            # Use all original samples
+            X_balanced.extend(cls_samples)
+            y_balanced.extend([cls] * cls_count)
 
-                # Generate additional augmented samples
-                samples_needed = max_samples - len(cls_samples)
+            # Generate additional augmented samples if needed
+            if cls_count < target_samples:
+                samples_needed = target_samples - cls_count
+                logger.info(f"Generating {samples_needed} additional samples for class {cls}")
 
-                # Apply more aggressive augmentation to create new samples
+                # Apply advanced augmentation for underrepresented classes
                 augmented_samples = []
                 while len(augmented_samples) < samples_needed:
                     # Randomly select a sample to augment
-                    idx = np.random.randint(0, len(cls_samples))
+                    idx = np.random.randint(0, cls_count)
                     img = cls_samples[idx].copy()
 
-                    # Convert to uint8 for augmentation
-                    img_uint8 = (img * 255).astype(np.uint8)
+                    # Convert to uint8 for augmentation (if not already in that format)
+                    if img.max() <= 1.0:
+                        img_uint8 = (img * 255).astype(np.uint8)
+                    else:
+                        img_uint8 = img.astype(np.uint8)
 
-                    # Apply augmentation
-                    augmented = self.transform(image=img_uint8)
-                    aug_img = augmented['image'].astype(np.float32) / 255.0
+                    # Apply advanced augmentation for more diversity
+                    augmented = self.advanced_transform(image=img_uint8)
+                    aug_img = augmented['image']
 
+                    # No need to convert back to float32 and divide by 255 since Normalize is applied in the transform
                     augmented_samples.append(aug_img)
 
                 X_balanced.extend(augmented_samples)
