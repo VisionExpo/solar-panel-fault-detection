@@ -96,34 +96,45 @@ class DataPreparation:
             logger.error(f"Error processing image {image_path}: {str(e)}")
             return None
 
-    def prepare_data(self) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset]:
-        """Prepare train, validation and test datasets"""
+    def prepare_data(self) -> Tuple[tf.data.Dataset, tf.data.Dataset, tf.data.Dataset, Dict]:
+        """Prepare train, validation and test datasets with balanced sampling"""
         images = []
         labels = []
         label_to_index = {}
+        category_counts = {}
 
         # Collect all images and labels
         for idx, category in enumerate(sorted(os.listdir(self.config.data.data_dir))):
             label_to_index[category] = idx
             category_path = Path(self.config.data.data_dir) / category
+            category_images = []
 
+            # Process JPG files
             for img_path in category_path.glob("*.[jJ][pP][gG]"):
                 processed_img = self.load_and_preprocess_image(str(img_path))
                 if processed_img is not None:
-                    images.append(processed_img)
-                    labels.append(idx)
+                    category_images.append(processed_img)
 
+            # Process JPEG files
             for img_path in category_path.glob("*.[jJ][pP][eE][gG]"):
                 processed_img = self.load_and_preprocess_image(str(img_path))
                 if processed_img is not None:
-                    images.append(processed_img)
-                    labels.append(idx)
+                    category_images.append(processed_img)
+
+            # Store category statistics
+            category_counts[category] = len(category_images)
+
+            # Add to main lists
+            images.extend(category_images)
+            labels.extend([idx] * len(category_images))
+
+            logger.info(f"Category {category}: {len(category_images)} images")
 
         # Convert to numpy arrays
         X = np.array(images)
         y = np.array(labels)
 
-        # Split data
+        # Split data with stratification to maintain class distribution
         X_train, X_temp, y_train, y_temp = train_test_split(
             X, y,
             test_size=self.config.data.val_ratio + self.config.data.test_ratio,
@@ -138,31 +149,104 @@ class DataPreparation:
             stratify=y_temp
         )
 
+        # Create additional augmented samples for underrepresented classes in training set
+        X_train_balanced, y_train_balanced = self._balance_classes(X_train, y_train)
+
         # Create TensorFlow datasets
-        train_ds = tf.data.Dataset.from_tensor_slices((X_train, y_train))\
-            .shuffle(1000)\
-            .batch(self.config.model.batch_size)\
-            .prefetch(tf.data.AUTOTUNE)
+        train_ds = tf.data.Dataset.from_tensor_slices((X_train_balanced, y_train_balanced))
+        train_ds = train_ds.shuffle(10000)  # Increased shuffle buffer
+        train_ds = train_ds.batch(self.config.model.batch_size)
+        train_ds = train_ds.prefetch(tf.data.AUTOTUNE)
 
-        val_ds = tf.data.Dataset.from_tensor_slices((X_val, y_val))\
-            .batch(self.config.model.batch_size)\
-            .prefetch(tf.data.AUTOTUNE)
+        val_ds = tf.data.Dataset.from_tensor_slices((X_val, y_val))
+        val_ds = val_ds.batch(self.config.model.batch_size)
+        val_ds = val_ds.prefetch(tf.data.AUTOTUNE)
 
-        test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test))\
-            .batch(self.config.model.batch_size)\
-            .prefetch(tf.data.AUTOTUNE)
+        test_ds = tf.data.Dataset.from_tensor_slices((X_test, y_test))
+        test_ds = test_ds.batch(self.config.model.batch_size)
+        test_ds = test_ds.prefetch(tf.data.AUTOTUNE)
 
         # Log dataset statistics
-        logger.info(f"Training set size: {len(X_train)}")
+        logger.info(f"Original training set size: {len(X_train)}")
+        logger.info(f"Balanced training set size: {len(X_train_balanced)}")
         logger.info(f"Validation set size: {len(X_val)}")
         logger.info(f"Test set size: {len(X_test)}")
+        logger.info(f"Category distribution: {category_counts}")
 
         # Log to MLflow
         mlflow.log_params({
-            "train_size": len(X_train),
+            "original_train_size": len(X_train),
+            "balanced_train_size": len(X_train_balanced),
             "val_size": len(X_val),
             "test_size": len(X_test),
             "num_classes": len(label_to_index)
         })
 
+        # Log category counts
+        for category, count in category_counts.items():
+            mlflow.log_param(f"category_{category}_count", count)
+
         return train_ds, val_ds, test_ds, label_to_index
+
+    def _balance_classes(self, X: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+        """Balance classes by augmenting underrepresented classes"""
+        # Count samples per class
+        unique_classes, class_counts = np.unique(y, return_counts=True)
+        max_samples = np.max(class_counts)
+
+        logger.info(f"Class counts before balancing: {dict(zip(unique_classes, class_counts))}")
+
+        # Create balanced dataset
+        X_balanced = []
+        y_balanced = []
+
+        for cls in unique_classes:
+            # Get samples for this class
+            cls_indices = np.where(y == cls)[0]
+            cls_samples = X[cls_indices]
+
+            # If we have enough samples, just use them
+            if len(cls_samples) >= max_samples:
+                selected_indices = np.random.choice(len(cls_samples), max_samples, replace=False)
+                X_balanced.extend(cls_samples[selected_indices])
+                y_balanced.extend([cls] * max_samples)
+            else:
+                # Use all original samples
+                X_balanced.extend(cls_samples)
+                y_balanced.extend([cls] * len(cls_samples))
+
+                # Generate additional augmented samples
+                samples_needed = max_samples - len(cls_samples)
+
+                # Apply more aggressive augmentation to create new samples
+                augmented_samples = []
+                while len(augmented_samples) < samples_needed:
+                    # Randomly select a sample to augment
+                    idx = np.random.randint(0, len(cls_samples))
+                    img = cls_samples[idx].copy()
+
+                    # Convert to uint8 for augmentation
+                    img_uint8 = (img * 255).astype(np.uint8)
+
+                    # Apply augmentation
+                    augmented = self.transform(image=img_uint8)
+                    aug_img = augmented['image'].astype(np.float32) / 255.0
+
+                    augmented_samples.append(aug_img)
+
+                X_balanced.extend(augmented_samples)
+                y_balanced.extend([cls] * len(augmented_samples))
+
+        # Convert to numpy arrays and shuffle
+        X_balanced = np.array(X_balanced)
+        y_balanced = np.array(y_balanced)
+
+        # Shuffle the balanced dataset
+        indices = np.arange(len(X_balanced))
+        np.random.shuffle(indices)
+        X_balanced = X_balanced[indices]
+        y_balanced = y_balanced[indices]
+
+        logger.info(f"Class counts after balancing: {dict(zip(unique_classes, np.unique(y_balanced, return_counts=True)[1]))}")
+
+        return X_balanced, y_balanced
