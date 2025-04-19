@@ -73,8 +73,18 @@ class SolarPanelModel:
         
         # Start nested MLflow run
         with mlflow.start_run(nested=True):
-            # Initialize W&B
-            wandb.init(project=self.config.training.wandb_project)
+            # Initialize W&B with entity
+            wandb.init(
+                project=self.config.training.wandb_project,
+                entity=self.config.training.wandb_entity,
+                config={
+                    "learning_rate": self.config.model.learning_rate,
+                    "epochs": self.config.model.epochs,
+                    "batch_size": self.config.model.batch_size,
+                    "img_size": self.config.model.img_size,
+                    "architecture": "EfficientNetB0"
+                }
+            )
             
             # Define callbacks
             callbacks = [
@@ -94,7 +104,7 @@ class SolarPanelModel:
                     patience=3,
                     min_lr=1e-6
                 ),
-                wandb.keras.WandbMetricsLogger()  # Use new WandbMetricsLogger instead of WandbCallback
+                wandb.keras.WandbMetricsLogger()
             ]
             
             # Train model
