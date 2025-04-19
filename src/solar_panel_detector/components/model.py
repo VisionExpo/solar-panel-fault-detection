@@ -19,7 +19,7 @@ class SolarPanelModel:
         self.history = None
 
     def _build_model(self):
-        """Build EfficientNet model with custom top layers"""
+        """Build EfficientNet model with custom top layers and partial unfreezing"""
         base_model = EfficientNetB0(
             weights='imagenet',
             include_top=False,
@@ -28,15 +28,20 @@ class SolarPanelModel:
                         self.config.model.num_channels)
         )
 
-        # Freeze base model layers
-        base_model.trainable = False
+        # Freeze early layers but unfreeze later layers for fine-tuning
+        # This allows the model to adapt to our specific dataset
+        for layer in base_model.layers[:-20]:  # Freeze all except last 20 layers
+            layer.trainable = False
 
         model = models.Sequential([
             base_model,
             layers.GlobalAveragePooling2D(),
             layers.BatchNormalization(),
             layers.Dropout(0.5),
-            layers.Dense(256, activation='relu'),
+            layers.Dense(512, activation='relu'),  # Increased capacity
+            layers.BatchNormalization(),
+            layers.Dropout(0.4),  # Increased dropout
+            layers.Dense(256, activation='relu'),  # Additional layer
             layers.BatchNormalization(),
             layers.Dropout(0.3),
             layers.Dense(self.config.model.num_classes, activation='softmax')
