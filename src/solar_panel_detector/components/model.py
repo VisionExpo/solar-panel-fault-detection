@@ -73,20 +73,7 @@ class SolarPanelModel:
         
         # Start nested MLflow run
         with mlflow.start_run(nested=True):
-            # Initialize W&B with entity
-            wandb.init(
-                project=self.config.training.wandb_project,
-                entity=self.config.training.wandb_entity,
-                config={
-                    "learning_rate": self.config.model.learning_rate,
-                    "epochs": self.config.model.epochs,
-                    "batch_size": self.config.model.batch_size,
-                    "img_size": self.config.model.img_size,
-                    "architecture": "EfficientNetB0"
-                }
-            )
-            
-            # Define callbacks
+            # Initialize callbacks
             callbacks = [
                 tf.keras.callbacks.ModelCheckpoint(
                     str(self.config.model.best_model_path),
@@ -103,9 +90,28 @@ class SolarPanelModel:
                     factor=0.2,
                     patience=3,
                     min_lr=1e-6
-                ),
-                wandb.keras.WandbMetricsLogger()
+                )
             ]
+            
+            # Try to initialize W&B if available
+            try:
+                import wandb
+                wandb.init(
+                    project=self.config.training.wandb_project,
+                    entity=self.config.training.wandb_entity,
+                    config={
+                        "learning_rate": self.config.model.learning_rate,
+                        "epochs": self.config.model.epochs,
+                        "batch_size": self.config.model.batch_size,
+                        "img_size": self.config.model.img_size,
+                        "architecture": "EfficientNetB0"
+                    }
+                )
+                callbacks.append(wandb.keras.WandbMetricsLogger())
+                wandb_enabled = True
+            except Exception as e:
+                logger.warning(f"WandB initialization failed, continuing without WandB logging: {str(e)}")
+                wandb_enabled = False
             
             # Train model
             self.history = self.model.fit(
@@ -122,7 +128,8 @@ class SolarPanelModel:
             # Log metrics and artifacts
             self._log_training_results()
             
-            wandb.finish()
+            if wandb_enabled:
+                wandb.finish()
         
     def _log_training_results(self):
         """Log training metrics and generate visualization artifacts"""
