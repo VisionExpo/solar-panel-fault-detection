@@ -13,13 +13,13 @@ class DataConfig:
 
 @dataclass
 class ModelConfig:
-    img_size: tuple = (224, 224)
+    img_size: tuple = (384, 384)  # Increased image size for better performance
     num_channels: int = 3
     num_classes: int = 6
-    batch_size: int = 32
+    batch_size: int = 16  # Reduced batch size due to larger model
     epochs: int = 50
-    learning_rate: float = 0.001
-    early_stopping_patience: int = 5
+    learning_rate: float = 0.0005  # Reduced learning rate for stability
+    early_stopping_patience: int = 8  # Increased patience
     model_dir: Path = Path("artifacts/models")
     best_model_path: Path = Path("artifacts/models/best_model.h5")
 
