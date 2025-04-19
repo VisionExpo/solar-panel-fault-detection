@@ -89,13 +89,10 @@ class DataPreparation:
             A.Transpose(p=0.7),
             A.ShiftScaleRotate(shift_limit=0.2, scale_limit=0.3, rotate_limit=45, p=0.7),
             A.GridDistortion(p=0.5),
-            A.ElasticTransform(alpha=120, sigma=120 * 0.05, alpha_affine=120 * 0.03, p=0.5),
+            A.ElasticTransform(alpha=120, sigma=120 * 0.05, p=0.5),
 
-            # Cutout and CoarseDropout for robustness
-            A.OneOf([
-                A.Cutout(num_holes=8, max_h_size=32, max_w_size=32, p=0.7),
-                A.CoarseDropout(max_holes=8, max_height=32, max_width=32, p=0.7),
-            ], p=0.5),
+            # CoarseDropout for robustness
+            A.CoarseDropout(max_holes=8, max_height=32, max_width=32, p=0.5),
 
             # Heavy color and lighting adjustments
             A.OneOf([
