@@ -4,7 +4,6 @@ import tensorflow_addons as tfa
 from tensorflow.keras.applications import EfficientNetB0
 import mlflow
 import wandb
-from wandb.keras import WandbCallback
 from ..utils.logger import logger
 from ..config.configuration import Config
 import matplotlib.pyplot as plt
@@ -95,7 +94,7 @@ class SolarPanelModel:
                     patience=3,
                     min_lr=1e-6
                 ),
-                WandbCallback()
+                wandb.keras.WandbMetricsLogger()  # Use new WandbMetricsLogger instead of WandbCallback
             ]
             
             # Train model
