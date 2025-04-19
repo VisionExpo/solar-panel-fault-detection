@@ -1,0 +1,29 @@
+# Version control
+.git
+.gitignore
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+venv/
+.env
+
+# Project specific
+Faulty_solar_panel/
+downloads/
+logs/
+*.ipynb
+tests/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# MLflow and Wandb
+mlruns/
+wandb/
+artifacts/
