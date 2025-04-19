@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, send_file
 import tensorflow as tf
 import numpy as np
 import cv2
@@ -10,6 +10,8 @@ from concurrent.futures import ThreadPoolExecutor
 import io
 from PIL import Image
 import time
+from src.solar_panel_detector.components.monitoring import ModelMonitor
+from src.solar_panel_detector.utils.logger import logger
 
 app = Flask(__name__)
 
@@ -17,14 +19,20 @@ app = Flask(__name__)
 MODEL_PATH = Path("artifacts/models/serving")
 LABEL_MAPPING_PATH = Path("artifacts/models/label_mapping.json")
 IMG_SIZE = (224, 224)
-BATCH_SIZE = 32
+BATCH_SIZE = int(os.getenv('MODEL_BATCH_SIZE', '32'))
 
-# Initialize thread pool for parallel processing
-executor = ThreadPoolExecutor(max_workers=4)
+# Initialize thread pool and monitoring
+executor = ThreadPoolExecutor(max_workers=int(os.getenv('MODEL_NUM_WORKERS', '4')))
+monitor = ModelMonitor()
 
-# Load model and label mapping at startup
+# Model optimization
 @lru_cache(maxsize=1)
 def load_model():
+    # Enable mixed precision for faster inference
+    tf.config.optimizer.set_jit(True)
+    policy = tf.keras.mixed_precision.Policy('mixed_float16')
+    tf.keras.mixed_precision.set_global_policy(policy)
+    
     return tf.saved_model.load(str(MODEL_PATH))
 
 @lru_cache(maxsize=1)
@@ -45,28 +53,41 @@ def preprocess_image(image_data):
         # Resize
         image = cv2.resize(image, IMG_SIZE)
         
-        # Normalize
+        # Normalize and convert to float16 for mixed precision
         image = image.astype(np.float32) / 255.0
+        image = tf.cast(image, tf.float16)
         
         return image
     except Exception as e:
-        app.logger.error(f"Error preprocessing image: {str(e)}")
+        logger.error(f"Error preprocessing image: {str(e)}")
         return None
 
 def batch_predict(images):
-    """Perform batch prediction"""
+    """Perform batch prediction with timing"""
     try:
+        start_time = time.time()
         model = load_model()
-        predictions = model(tf.convert_to_tensor(images))
-        return predictions.numpy()
+        
+        # Convert to mixed precision
+        images = tf.cast(images, tf.float16)
+        predictions = model(images)
+        predictions = tf.cast(predictions, tf.float32)  # Convert back for post-processing
+        
+        inference_time = time.time() - start_time
+        return predictions.numpy(), inference_time
     except Exception as e:
-        app.logger.error(f"Error in batch prediction: {str(e)}")
-        return None
+        logger.error(f"Error in batch prediction: {str(e)}")
+        return None, 0
 
 @app.route('/health', methods=['GET'])
 def health_check():
-    """Health check endpoint"""
-    return jsonify({"status": "healthy", "timestamp": time.time()})
+    """Health check endpoint with basic metrics"""
+    report = monitor.generate_performance_report()
+    return jsonify({
+        "status": "healthy",
+        "timestamp": time.time(),
+        "metrics": report['performance_metrics']
+    })
 
 @app.route('/predict', methods=['POST'])
 def predict():
@@ -86,8 +107,8 @@ def predict():
         # Add batch dimension
         image_batch = np.expand_dims(processed_image, axis=0)
         
-        # Predict
-        predictions = batch_predict(image_batch)
+        # Predict with timing
+        predictions, inference_time = batch_predict(image_batch)
         if predictions is None:
             return jsonify({'error': 'Error making prediction'}), 500
             
@@ -109,14 +130,22 @@ def predict():
             for idx in top_3_idx
         ]
         
+        # Log prediction
+        monitor.log_prediction(
+            prediction=predicted_class,
+            confidence=confidence,
+            inference_time=inference_time
+        )
+        
         return jsonify({
             'prediction': predicted_class,
             'confidence': confidence,
+            'inference_time_ms': inference_time * 1000,
             'top_3_predictions': top_3_predictions
         })
         
     except Exception as e:
-        app.logger.error(f"Error processing request: {str(e)}")
+        logger.error(f"Error processing request: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
 
 @app.route('/batch_predict', methods=['POST'])
@@ -153,7 +182,7 @@ def batch_predict_endpoint():
         image_batch = np.stack(processed_images)
         
         # Predict
-        predictions = batch_predict(image_batch)
+        predictions, inference_time = batch_predict(image_batch)
         if predictions is None:
             return jsonify({'error': 'Error making predictions'}), 500
             
@@ -182,12 +211,45 @@ def batch_predict_endpoint():
                 'confidence': confidence,
                 'top_3_predictions': top_3_predictions
             })
+            
+            # Log each prediction
+            monitor.log_prediction(
+                prediction=predicted_class,
+                confidence=confidence,
+                inference_time=inference_time / len(predictions),
+                batch_size=len(predictions)
+            )
         
-        return jsonify({'results': results})
+        return jsonify({
+            'results': results,
+            'inference_time_ms': inference_time * 1000,
+            'batch_size': len(predictions)
+        })
         
     except Exception as e:
-        app.logger.error(f"Error processing batch request: {str(e)}")
+        logger.error(f"Error processing batch request: {str(e)}")
         return jsonify({'error': 'Internal server error'}), 500
+
+@app.route('/metrics', methods=['GET'])
+def get_metrics():
+    """Endpoint to get current performance metrics"""
+    report = monitor.generate_performance_report()
+    return jsonify(report)
+
+@app.route('/dashboard', methods=['GET'])
+def get_dashboard():
+    """Endpoint to get the latest performance dashboard"""
+    try:
+        dashboard_dir = Path("artifacts/monitoring")
+        dashboard_files = list(dashboard_dir.glob("performance_dashboard_*.html"))
+        if not dashboard_files:
+            return jsonify({'error': 'No dashboard available'}), 404
+            
+        latest_dashboard = max(dashboard_files, key=lambda x: x.stat().st_mtime)
+        return send_file(latest_dashboard)
+    except Exception as e:
+        logger.error(f"Error serving dashboard: {str(e)}")
+        return jsonify({'error': 'Error serving dashboard'}), 500
 
 if __name__ == '__main__':
     # Load model at startup
