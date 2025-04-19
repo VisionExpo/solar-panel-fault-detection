@@ -64,24 +64,21 @@ class DataIngestion:
         """Search for images using multiple search engines"""
         image_urls = set()
         
-        # List of search APIs (you would need to add your own API keys)
-        search_engines = [
-            {
-                'name': 'Google Custom Search',
-                'url': 'https://www.googleapis.com/customsearch/v1',
-                'params': {
-                    'key': os.getenv('GOOGLE_API_KEY'),
-                    'cx': os.getenv('GOOGLE_CSE_ID'),
-                    'searchType': 'image',
-                    'q': query
-                }
-            },
-            # Add more search engines as needed
-        ]
+        # Try Google Custom Search if API keys are available
+        google_api_key = os.getenv('GOOGLE_API_KEY')
+        google_cse_id = os.getenv('GOOGLE_CSE_ID')
         
-        for engine in search_engines:
+        if google_api_key and google_cse_id:
             try:
-                response = requests.get(engine['url'], params=engine['params'])
+                response = requests.get(
+                    'https://www.googleapis.com/customsearch/v1',
+                    params={
+                        'key': google_api_key,
+                        'cx': google_cse_id,
+                        'searchType': 'image',
+                        'q': query
+                    }
+                )
                 if response.status_code == 200:
                     data = response.json()
                     if 'items' in data:
@@ -90,8 +87,47 @@ class DataIngestion:
                                 break
                             image_urls.add(item['link'])
             except Exception as e:
-                logger.error(f"Error searching images with {engine['name']}: {str(e)}")
+                logger.error(f"Error using Google Custom Search: {str(e)}")
+        
+        # If we still need more images, try DuckDuckGo
+        if len(image_urls) < max_results:
+            try:
+                # DuckDuckGo image search
+                ddg_url = f"https://duckduckgo.com/?q={urllib.parse.quote(query)}&iax=images&ia=images"
+                response = requests.get(ddg_url, headers=self.headers)
                 
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    image_elements = soup.select('img[data-src]')
+                    
+                    for img in image_elements:
+                        if len(image_urls) >= max_results:
+                            break
+                        if 'src' in img.attrs:
+                            image_urls.add(img['src'])
+                        elif 'data-src' in img.attrs:
+                            image_urls.add(img['data-src'])
+            except Exception as e:
+                logger.error(f"Error using DuckDuckGo search: {str(e)}")
+        
+        # If still need more images, try Bing
+        if len(image_urls) < max_results:
+            try:
+                bing_url = f"https://www.bing.com/images/search?q={urllib.parse.quote(query)}&qft=+filterui:photo-photo"
+                response = requests.get(bing_url, headers=self.headers)
+                
+                if response.status_code == 200:
+                    soup = BeautifulSoup(response.text, 'html.parser')
+                    image_elements = soup.select('.mimg')
+                    
+                    for img in image_elements:
+                        if len(image_urls) >= max_results:
+                            break
+                        if 'src' in img.attrs:
+                            image_urls.add(img['src'])
+            except Exception as e:
+                logger.error(f"Error using Bing search: {str(e)}")
+        
         return list(image_urls)[:max_results]
     
     def download_category_images(self, category: str, target_count: int = 5000):
