@@ -71,48 +71,48 @@ class SolarPanelModel:
         # Create model directory
         self.config.model.model_dir.mkdir(parents=True, exist_ok=True)
         
-        # Initialize MLflow and W&B
-        mlflow.start_run()
-        wandb.init(project=self.config.training.wandb_project)
-        
-        # Define callbacks
-        callbacks = [
-            tf.keras.callbacks.ModelCheckpoint(
-                str(self.config.model.best_model_path),
-                save_best_only=True,
-                monitor='val_accuracy'
-            ),
-            tf.keras.callbacks.EarlyStopping(
-                monitor='val_loss',
-                patience=self.config.model.early_stopping_patience,
-                restore_best_weights=True
-            ),
-            tf.keras.callbacks.ReduceLROnPlateau(
-                monitor='val_loss',
-                factor=0.2,
-                patience=3,
-                min_lr=1e-6
-            ),
-            WandbCallback()
-        ]
-        
-        # Train model
-        self.history = self.model.fit(
-            train_ds,
-            validation_data=val_ds,
-            epochs=self.config.model.epochs,
-            callbacks=callbacks
-        )
-        
-        # Save label mapping
-        with open(self.config.model.model_dir / 'label_mapping.json', 'w') as f:
-            json.dump(label_mapping, f)
-        
-        # Log metrics and artifacts
-        self._log_training_results()
-        
-        mlflow.end_run()
-        wandb.finish()
+        # Start nested MLflow run
+        with mlflow.start_run(nested=True):
+            # Initialize W&B
+            wandb.init(project=self.config.training.wandb_project)
+            
+            # Define callbacks
+            callbacks = [
+                tf.keras.callbacks.ModelCheckpoint(
+                    str(self.config.model.best_model_path),
+                    save_best_only=True,
+                    monitor='val_accuracy'
+                ),
+                tf.keras.callbacks.EarlyStopping(
+                    monitor='val_loss',
+                    patience=self.config.model.early_stopping_patience,
+                    restore_best_weights=True
+                ),
+                tf.keras.callbacks.ReduceLROnPlateau(
+                    monitor='val_loss',
+                    factor=0.2,
+                    patience=3,
+                    min_lr=1e-6
+                ),
+                WandbCallback()
+            ]
+            
+            # Train model
+            self.history = self.model.fit(
+                train_ds,
+                validation_data=val_ds,
+                epochs=self.config.model.epochs,
+                callbacks=callbacks
+            )
+            
+            # Save label mapping
+            with open(self.config.model.model_dir / 'label_mapping.json', 'w') as f:
+                json.dump(label_mapping, f)
+            
+            # Log metrics and artifacts
+            self._log_training_results()
+            
+            wandb.finish()
         
     def _log_training_results(self):
         """Log training metrics and generate visualization artifacts"""
