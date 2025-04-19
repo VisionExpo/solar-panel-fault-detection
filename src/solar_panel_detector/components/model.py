@@ -60,20 +60,36 @@ class SolarPanelModel:
 
         model = tf.keras.Model(inputs, outputs)
 
-        # Compile with optimizer and learning rate
-        # Using native TF optimizer instead of TFA to avoid compatibility issues
+        # Implement a more sophisticated learning rate schedule
+        # Cosine decay with warm restarts for better convergence
         initial_learning_rate = self.config.model.learning_rate
-
-        # Use standard Adam optimizer instead of AdamW from TFA
-        optimizer = tf.keras.optimizers.Adam(
-            learning_rate=initial_learning_rate
+        lr_schedule = tf.keras.optimizers.schedules.CosineDecayRestarts(
+            initial_learning_rate,
+            first_decay_steps=1000,
+            t_mul=2.0,
+            m_mul=0.9,
+            alpha=1e-5
         )
+
+        # Use AdamW optimizer which combines Adam with weight decay
+        optimizer = tf.keras.optimizers.AdamW(
+            learning_rate=lr_schedule,
+            weight_decay=1e-4,
+            beta_1=0.9,
+            beta_2=0.999,
+            epsilon=1e-7
+        )
+
+        # Use focal loss to handle class imbalance
+        focal_loss = FocalLoss(alpha=0.25, gamma=2.0)
 
         model.compile(
             optimizer=optimizer,
-            loss='sparse_categorical_crossentropy',
+            loss=focal_loss,  # Use focal loss instead of standard cross-entropy
             metrics=['accuracy',
-                    tf.keras.metrics.SparseTopKCategoricalAccuracy(k=3, name='top_3_accuracy')]
+                    tf.keras.metrics.SparseTopKCategoricalAccuracy(k=3, name='top_3_accuracy'),
+                    tf.keras.metrics.Precision(name='precision'),
+                    tf.keras.metrics.Recall(name='recall')]
         )
 
         return model
