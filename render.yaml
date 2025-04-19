@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: solar-panel-fault-detector
+    env: docker
+    region: oregon
+    plan: standard
+    branch: main
+    numInstances: 1
+    healthCheckPath: /health
+    dockerContext: .
+    dockerfilePath: ./Dockerfile
+    envVars:
+      - key: PORT
+        value: 10000
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: GOOGLE_CSE_ID
+        sync: false
+      - key: WANDB_API_KEY
+        sync: false
+      - key: MLFLOW_TRACKING_URI
+        sync: false
+    autoDeploy: true
