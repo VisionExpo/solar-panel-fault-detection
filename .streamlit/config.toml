@@ -9,7 +9,8 @@ font = "sans serif"
 port = 8501
 maxUploadSize = 200
 enableXsrfProtection = true
-enableCORS = false
+enableCORS = true
+enableWebsocketCompression = false
 
 [runner]
 fastReruns = true
