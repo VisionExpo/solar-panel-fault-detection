@@ -1,0 +1,32 @@
+version: '3'
+
+services:
+  # FastAPI service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./deployment:/app
+    environment:
+      - MODEL_PATH=/app/model
+      - LABEL_MAPPING_PATH=/app/label_mapping.json
+    restart: unless-stopped
+    command: ["python", "app_fastapi.py"]
+
+  # Gradio web interface
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "7860:7860"
+    volumes:
+      - ./deployment:/app
+    environment:
+      - MODEL_PATH=/app/model
+      - LABEL_MAPPING_PATH=/app/label_mapping.json
+    restart: unless-stopped
+    command: ["python", "app.py"]
