@@ -13,32 +13,68 @@ from typing import Tuple, Dict
 class DataPreparation:
     def __init__(self, config: Config):
         self.config = config
+        # Enhanced augmentation pipeline with more aggressive transformations
+        # and solar panel specific augmentations
         self.transform = A.Compose([
+            # Geometric transformations
             A.RandomRotate90(p=0.5),
             A.HorizontalFlip(p=0.5),
             A.VerticalFlip(p=0.5),
             A.Transpose(p=0.5),
+            A.ShiftScaleRotate(shift_limit=0.1, scale_limit=0.2, rotate_limit=30, p=0.5),
+
+            # Noise and blur - simulate camera quality issues
             A.OneOf([
-                A.GaussNoise(p=0.5),
+                A.GaussNoise(var_limit=(10, 50), p=0.5),
                 A.GaussianBlur(blur_limit=(3, 7)),
-            ], p=0.2),
+                A.ISONoise(color_shift=(0.01, 0.05), intensity=(0.1, 0.5), p=0.5),
+            ], p=0.3),
+
+            # Motion and focus issues
             A.OneOf([
-                A.MotionBlur(blur_limit=3),
-                A.MedianBlur(blur_limit=3),
-                A.Blur(blur_limit=3),
-            ], p=0.2),
+                A.MotionBlur(blur_limit=5),
+                A.MedianBlur(blur_limit=5),
+                A.Blur(blur_limit=5),
+                A.ZoomBlur(max_factor=1.5, p=0.5),
+            ], p=0.3),
+
+            # Distortions - simulate lens effects
             A.OneOf([
-                A.OpticalDistortion(distort_limit=0.05),
+                A.OpticalDistortion(distort_limit=0.1),
                 A.GridDistortion(distort_limit=0.3),
                 A.ElasticTransform(alpha=1, sigma=50),
-            ], p=0.2),
+                A.Perspective(scale=(0.05, 0.1), p=0.5),
+            ], p=0.3),
+
+            # Color adjustments - simulate lighting conditions
             A.OneOf([
-                A.CLAHE(clip_limit=2),
+                A.CLAHE(clip_limit=4, p=0.7),
                 A.Sharpen(alpha=(0.2, 0.5), lightness=(0.5, 1.0)),
                 A.Emboss(alpha=(0.2, 0.5), strength=(0.2, 0.7)),
-                A.RandomBrightnessContrast(),
+                A.RandomBrightnessContrast(brightness_limit=0.3, contrast_limit=0.3, p=0.8),
+                A.RandomShadow(shadow_roi=(0, 0, 1, 1), p=0.5),  # Simulate shadows on panels
+                A.RandomSunFlare(flare_roi=(0, 0, 1, 1), angle_lower=0, angle_upper=1,
+                                num_flare_circles_lower=1, num_flare_circles_upper=3,
+                                src_radius=100, src_color=(255, 255, 255), p=0.3),  # Simulate sun reflections
+            ], p=0.5),
+
+            # Color shifts - simulate different weather conditions
+            A.OneOf([
+                A.HueSaturationValue(hue_shift_limit=20, sat_shift_limit=30, val_shift_limit=20, p=0.7),
+                A.RGBShift(r_shift_limit=20, g_shift_limit=20, b_shift_limit=20, p=0.5),
+                A.ChannelShuffle(p=0.2),  # More extreme color distortion
+                A.ToSepia(p=0.2),  # Simulate aged/dusty appearance
+            ], p=0.5),
+
+            # Weather simulations
+            A.OneOf([
+                A.RandomRain(slant_lower=-10, slant_upper=10, drop_length=20, drop_width=1, drop_color=(200, 200, 200), p=0.3),  # Rain effect
+                A.RandomSnow(snow_point_lower=0.1, snow_point_upper=0.3, brightness_coeff=2.5, p=0.2),  # Snow effect
+                A.RandomFog(fog_coef_lower=0.3, fog_coef_upper=0.5, alpha_coef=0.1, p=0.2),  # Fog effect
             ], p=0.3),
-            A.HueSaturationValue(p=0.3),
+
+            # Compression and quality degradation
+            A.ImageCompression(quality_lower=70, quality_upper=100, p=0.3),  # JPEG compression artifacts
         ])
 
     def load_and_preprocess_image(self, image_path: str) -> np.ndarray:
@@ -47,15 +83,15 @@ class DataPreparation:
             image = cv2.imread(str(image_path))
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
             image = cv2.resize(image, self.config.model.img_size)
-            
+
             # Apply augmentation
             augmented = self.transform(image=image)
             image = augmented['image']
-            
+
             # Normalize
             image = image.astype(np.float32) / 255.0
             return image
-            
+
         except Exception as e:
             logger.error(f"Error processing image {image_path}: {str(e)}")
             return None
@@ -65,18 +101,18 @@ class DataPreparation:
         images = []
         labels = []
         label_to_index = {}
-        
+
         # Collect all images and labels
         for idx, category in enumerate(sorted(os.listdir(self.config.data.data_dir))):
             label_to_index[category] = idx
             category_path = Path(self.config.data.data_dir) / category
-            
+
             for img_path in category_path.glob("*.[jJ][pP][gG]"):
                 processed_img = self.load_and_preprocess_image(str(img_path))
                 if processed_img is not None:
                     images.append(processed_img)
                     labels.append(idx)
-                    
+
             for img_path in category_path.glob("*.[jJ][pP][eE][gG]"):
                 processed_img = self.load_and_preprocess_image(str(img_path))
                 if processed_img is not None:
@@ -120,7 +156,7 @@ class DataPreparation:
         logger.info(f"Training set size: {len(X_train)}")
         logger.info(f"Validation set size: {len(X_val)}")
         logger.info(f"Test set size: {len(X_test)}")
-        
+
         # Log to MLflow
         mlflow.log_params({
             "train_size": len(X_train),
