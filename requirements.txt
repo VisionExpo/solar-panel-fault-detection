@@ -33,3 +33,4 @@ requests>=2.31.0
 streamlit>=1.22.0
 streamlit-autorefresh>=0.0.1
 streamlit-image-comparison>=0.0.2
+beautifulsoup4>=4.12.0
