@@ -242,28 +242,62 @@ def create_interface():
                 gr.Markdown("""
                 ## About
 
-                This application detects faults in solar panels using a deep learning model.
+                This application detects faults in solar panels using a deep learning model. It helps solar farm operators and maintenance teams identify issues that may reduce energy production efficiency.
 
                 ### Fault Types
 
-                - **Bird-drop**: Solar panel with bird droppings on the surface
-                - **Clean**: Solar panel with no visible faults or issues
-                - **Dusty**: Solar panel covered with dust or dirt
-                - **Electrical-damage**: Solar panel with electrical damage
-                - **Physical-damage**: Solar panel with physical damage
-                - **Snow-covered**: Solar panel covered with snow
+                - **Bird-drop**: Solar panel with bird droppings on the surface. Bird droppings can create hotspots and reduce efficiency by blocking sunlight.
+                - **Clean**: Solar panel with no visible faults or issues. These panels are operating at optimal efficiency.
+                - **Dusty**: Solar panel covered with dust or dirt. Dust accumulation can reduce efficiency by up to 30% in some regions.
+                - **Electrical-damage**: Solar panel with electrical damage, such as hotspots, PID (Potential Induced Degradation), or broken connections.
+                - **Physical-damage**: Solar panel with physical damage, such as cracks, broken glass, or delamination.
+                - **Snow-covered**: Solar panel covered with snow. Snow can completely block sunlight and reduce output to zero.
+
+                ### Dataset Information
+
+                - The model was trained on a dataset of solar panel images collected from various sources
+                - Images include panels in different environmental conditions and with various fault types
+                - The dataset was split into training (70%), validation (15%), and test (15%) sets
+                - Data augmentation techniques were applied to increase the diversity of the training data
 
                 ### Model Information
 
-                - Architecture: EfficientNetB3
-                - Input size: 384x384 pixels
-                - Trained on a dataset of solar panel images with various fault types
-                - Uses transfer learning with pre-trained weights
+                - **Architecture**: EfficientNetB3 - a convolutional neural network known for its efficiency and accuracy
+                - **Input size**: 384x384 pixels - images are resized and normalized before processing
+                - **Transfer Learning**: Uses pre-trained weights from ImageNet to leverage features learned on a large dataset
+                - **Fine-tuning**: The model was fine-tuned on our solar panel dataset with a reduced learning rate
+                - **Training Process**: Trained using categorical cross-entropy loss and Adam optimizer
+                - **Regularization**: Dropout and early stopping were used to prevent overfitting
+
+                ### Performance Metrics
+
+                - **Accuracy**: The model achieves good accuracy on the test set
+                - **Precision and Recall**: Balanced to ensure reliable fault detection
+                - **Confusion Matrix**: Available in the Model Performance tab
+                - **Class-specific Metrics**: Different fault types have varying detection accuracy
 
                 ### Deployment Information
 
-                This model is deployed using Gradio for the web interface and can also be accessed via a FastAPI REST API.
-                The model can be deployed to cloud platforms like Render for production use.
+                - **Web Interface**: Built with Gradio for interactive use and visualization
+                - **API**: FastAPI REST API available for integration with other systems
+                - **Batch Processing**: Support for processing multiple images in batch mode
+                - **Cloud Deployment**: Ready for deployment on cloud platforms like Render
+                - **Containerization**: Docker support for consistent deployment across environments
+
+                ### Use Cases
+
+                - **Routine Inspection**: Regular monitoring of solar farm health
+                - **Maintenance Planning**: Identifying panels that need cleaning or repair
+                - **Performance Optimization**: Ensuring maximum energy production
+                - **Damage Assessment**: Evaluating panels after storms or other events
+                - **Quality Control**: Checking newly installed panels for manufacturing defects
+
+                ### Limitations
+
+                - The model may not detect subtle or internal faults that don't have visible signs
+                - Performance may vary based on lighting conditions and image quality
+                - Some fault types may be confused with others if they have similar visual characteristics
+                - The model should be used as an aid to human inspection, not as a complete replacement
                 """)
 
     return interface
@@ -273,4 +307,4 @@ if __name__ == "__main__":
     interface = create_interface()
 
     # Launch interface
-    interface.launch(server_name="0.0.0.0", server_port=7860)
+    interface.launch(server_name="0.0.0.0", server_port=7861)
