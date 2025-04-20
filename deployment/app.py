@@ -201,6 +201,12 @@ def create_interface():
                         gr.Markdown("*Training curves visualization not available*")
 
                 with gr.Row():
+                    if os.path.exists(os.path.join(vis_path, "learning_rate.png")):
+                        gr.Image(os.path.join(vis_path, "learning_rate.png"), label="Learning Rate Schedule")
+                    else:
+                        gr.Markdown("*Learning rate visualization not available*")
+
+                with gr.Row():
                     with gr.Column():
                         if os.path.exists(os.path.join(vis_path, "confusion_matrix.png")):
                             gr.Image(os.path.join(vis_path, "confusion_matrix.png"), label="Confusion Matrix")
