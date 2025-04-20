@@ -1,0 +1,8 @@
+{
+    "Bird-drop": 0,
+    "Clean": 1,
+    "Dusty": 2,
+    "Electrical-damage": 3,
+    "Physical-damage": 4,
+    "Snow-covered": 5
+}
