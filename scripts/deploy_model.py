@@ -1,183 +1,88 @@
 import os
-import sys
 import shutil
-from pathlib import Path
-import json
-import tensorflow as tf
-
-# Add project root to Python path
-project_root = Path(__file__).parent.parent
-sys.path.append(str(project_root))
-
-from src.solar_panel_detector.config.configuration import Config
-from src.solar_panel_detector.utils.logger import logger
-
-def main():
-    try:
-        # Initialize configuration
-        config = Config()
-        
-        # Define deployment directory
-        deployment_dir = Path("deployment")
-        os.makedirs(deployment_dir, exist_ok=True)
-        
-        # Copy model to deployment directory
-        model_path = Path("artifacts/models/final_model")
-        deployment_model_path = deployment_dir / "model"
-        
-        if model_path.exists():
-            # If model directory exists, copy it
-            if deployment_model_path.exists():
-                shutil.rmtree(deployment_model_path)
-            shutil.copytree(model_path, deployment_model_path)
-            logger.info(f"Model copied to {deployment_model_path}")
-        else:
-            logger.error(f"Model not found at {model_path}")
-            return
-        
-        # Copy label mapping to deployment directory
-        label_mapping_path = Path("artifacts/models/label_mapping.json")
-        deployment_label_mapping_path = deployment_dir / "label_mapping.json"
-        
-        if label_mapping_path.exists():
-            shutil.copy(label_mapping_path, deployment_label_mapping_path)
-            logger.info(f"Label mapping copied to {deployment_label_mapping_path}")
-        else:
-            logger.error(f"Label mapping not found at {label_mapping_path}")
-            return
-        
-        # Copy inference script to deployment directory
-        inference_script_path = Path("src/solar_panel_detector/inference.py")
-        deployment_inference_script_path = deployment_dir / "inference.py"
-        
-        if inference_script_path.exists():
-            shutil.copy(inference_script_path, deployment_inference_script_path)
-            logger.info(f"Inference script copied to {deployment_inference_script_path}")
-        else:
-            logger.error(f"Inference script not found at {inference_script_path}")
-            return
-        
-        # Create a simple example script
-        example_script = """
-import os
-import sys
-import tensorflow as tf
-import numpy as np
-import cv2
+import argparse
 import json
 from pathlib import Path
-from inference import SolarPanelFaultDetector
 
-def main():
-    # Path to model and label mapping
-    model_path = "model"
-    label_mapping_path = "label_mapping.json"
+def parse_args():
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description='Deploy the trained model')
+    parser.add_argument('--model_path', type=str, default='artifacts/models/final_model',
+                        help='Path to the trained model')
+    parser.add_argument('--deploy_dir', type=str, default='deployment/model',
+                        help='Directory to deploy the model to')
+    parser.add_argument('--label_mapping', type=str, default='deployment/label_mapping.json',
+                        help='Path to the label mapping file')
+    return parser.parse_args()
+
+def deploy_model(model_path, deploy_dir, label_mapping_path):
+    """
+    Deploy the trained model to the deployment directory.
     
-    # Initialize detector
-    detector = SolarPanelFaultDetector(model_path, label_mapping_path)
+    Args:
+        model_path: Path to the trained model
+        deploy_dir: Directory to deploy the model to
+        label_mapping_path: Path to the label mapping file
+    """
+    # Create deployment directory if it doesn't exist
+    os.makedirs(deploy_dir, exist_ok=True)
     
-    # Example: Predict on a single image
-    # Replace with your image path
-    image_path = "example.jpg"
-    
-    if os.path.exists(image_path):
-        # Get predictions
-        predictions = detector.predict(image_path)
-        print(f"Predictions for {image_path}:")
-        for class_name, prob in sorted(predictions.items(), key=lambda x: x[1], reverse=True):
-            print(f"  {class_name}: {prob:.4f}")
-        
-        # Get top 3 predictions
-        top_3 = detector.get_top_k_predictions(image_path, k=3)
-        print("\\nTop 3 predictions:")
-        for class_name, prob in top_3:
-            print(f"  {class_name}: {prob:.4f}")
-        
-        # Classify image
-        predicted_class, confidence = detector.classify_image(image_path)
-        print(f"\\nClassification: {predicted_class} (confidence: {confidence:.4f})")
+    # Copy model files to deployment directory
+    print(f"Copying model from {model_path} to {deploy_dir}...")
+    if os.path.exists(model_path):
+        # If the model_path is a directory, copy all files
+        if os.path.isdir(model_path):
+            # Remove existing files in deploy_dir
+            if os.path.exists(deploy_dir):
+                for item in os.listdir(deploy_dir):
+                    item_path = os.path.join(deploy_dir, item)
+                    if os.path.isfile(item_path):
+                        os.unlink(item_path)
+                    elif os.path.isdir(item_path):
+                        shutil.rmtree(item_path)
+            
+            # Copy all files from model_path to deploy_dir
+            for item in os.listdir(model_path):
+                s = os.path.join(model_path, item)
+                d = os.path.join(deploy_dir, item)
+                if os.path.isdir(s):
+                    shutil.copytree(s, d, dirs_exist_ok=True)
+                else:
+                    shutil.copy2(s, d)
+            print(f"Model copied successfully to {deploy_dir}")
+        else:
+            # If model_path is a file, copy it directly
+            shutil.copy2(model_path, deploy_dir)
+            print(f"Model file copied successfully to {deploy_dir}")
     else:
-        print(f"Test image not found: {image_path}")
-        print("Please provide a valid test image path.")
-
-if __name__ == "__main__":
-    main()
-"""
+        print(f"Error: Model path {model_path} does not exist")
+        return False
+    
+    # Create label mapping if it doesn't exist
+    if not os.path.exists(label_mapping_path):
+        print(f"Creating label mapping file at {label_mapping_path}...")
+        label_mapping = {
+            "Bird-drop": 0,
+            "Clean": 1,
+            "Dusty": 2,
+            "Electrical-damage": 3,
+            "Physical-damage": 4,
+            "Snow-covered": 5
+        }
         
-        example_script_path = deployment_dir / "example.py"
-        with open(example_script_path, 'w') as f:
-            f.write(example_script)
-        logger.info(f"Example script created at {example_script_path}")
-        
-        # Create a README file
-        readme = """# Solar Panel Fault Detector
+        with open(label_mapping_path, 'w') as f:
+            json.dump(label_mapping, f, indent=4)
+        print(f"Label mapping file created at {label_mapping_path}")
+    else:
+        print(f"Label mapping file already exists at {label_mapping_path}")
+    
+    print("Model deployment completed successfully!")
+    return True
 
-This is a deployment package for the Solar Panel Fault Detector model.
-
-## Contents
-
-- `model/`: The trained TensorFlow model
-- `label_mapping.json`: Mapping of class indices to class names
-- `inference.py`: Inference script with the SolarPanelFaultDetector class
-- `example.py`: Example script showing how to use the model
-
-## Usage
-
-1. Install the required dependencies:
-   ```
-   pip install tensorflow opencv-python numpy
-   ```
-
-2. Place your solar panel image in this directory.
-
-3. Run the example script:
-   ```
-   python example.py
-   ```
-
-4. Modify the example script to use your own image path.
-
-## Model Information
-
-This model can detect the following types of solar panel conditions:
-- Bird-drop
-- Clean
-- Dusty
-- Electrical-damage
-- Physical-damage
-- Snow-covered
-
-## API
-
-The `SolarPanelFaultDetector` class provides the following methods:
-
-- `predict(image)`: Returns a dictionary of class probabilities
-- `predict_batch(images)`: Predicts on a batch of images
-- `classify_image(image, threshold=0.5)`: Returns the most likely class and confidence
-- `get_top_k_predictions(image, k=3)`: Returns the top k predictions
-"""
-        
-        readme_path = deployment_dir / "README.md"
-        with open(readme_path, 'w') as f:
-            f.write(readme)
-        logger.info(f"README created at {readme_path}")
-        
-        # Create a requirements.txt file
-        requirements = """tensorflow>=2.8.0
-numpy>=1.19.5
-opencv-python>=4.5.5
-"""
-        
-        requirements_path = deployment_dir / "requirements.txt"
-        with open(requirements_path, 'w') as f:
-            f.write(requirements)
-        logger.info(f"Requirements file created at {requirements_path}")
-        
-        logger.info("Deployment package created successfully")
-        
-    except Exception as e:
-        logger.error(f"Error in deployment: {str(e)}")
-        raise e
+def main():
+    """Main function."""
+    args = parse_args()
+    deploy_model(args.model_path, args.deploy_dir, args.label_mapping)
 
 if __name__ == "__main__":
     main()
