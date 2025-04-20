@@ -4,8 +4,8 @@ info:
   description: API for detecting faults in solar panels using computer vision
   version: 1.0.0
   contact:
-    name: Your Name
-    email: your.email@example.com
+    name: Vishal Gorule
+    email: gorulevishal984@gmail.com
 
 servers:
   - url: http://localhost:5000
