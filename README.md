@@ -223,6 +223,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 
 ## Contact
 
-- Author: Your Name
-- Email: your.email@example.com
-- GitHub: [@yourusername](https://github.com/yourusername)
+- Author: Vishal Gorule
+- Email: gorulevishal984@gmail.com
+- GitHub: [@VisionExpo](https://github.com/VisionExpo)
