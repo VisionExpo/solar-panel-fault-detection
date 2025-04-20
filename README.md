@@ -1,6 +1,22 @@
 # Solar Panel Fault Detection System
 
+![Version](https://img.shields.io/badge/version-1.0-blue?style=flat)
+![Status](https://img.shields.io/badge/status-active-success?style=flat)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat)
+
 A deep learning system for detecting and classifying faults in solar panels using computer vision.
+
+## Tech Stack
+
+![Python](https://img.shields.io/badge/Python-3.9-blue?style=flat&logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?style=flat&logo=tensorflow&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.95.0-009688?style=flat&logo=fastapi&logoColor=white)
+![Gradio](https://img.shields.io/badge/Gradio-3.x-F9D371?style=flat&logo=gradio&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=flat&logo=opencv&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-1.24.x-013243?style=flat&logo=numpy&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7.x-11557c?style=flat)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)
+![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?style=flat&logo=render&logoColor=white)
 
 ## Features
 
@@ -43,6 +59,13 @@ This will open:
 
 ## Supported Fault Categories
 
+![Bird Droppings](https://img.shields.io/badge/Category-Bird%20Droppings-yellow?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiNGRkQxMDAiLz48L3N2Zz4=)
+![Clean](https://img.shields.io/badge/Category-Clean-brightgreen?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiM0Q0FGNTAiLz48L3N2Zz4=)
+![Dusty](https://img.shields.io/badge/Category-Dusty-lightgrey?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiM5RTlFOUUiLz48L3N2Zz4=)
+![Electrical Damage](https://img.shields.io/badge/Category-Electrical%20Damage-red?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiNGNDQzMzYiLz48L3N2Zz4=)
+![Physical Damage](https://img.shields.io/badge/Category-Physical%20Damage-orange?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiNGRjk4MDAiLz48L3N2Zz4=)
+![Snow Coverage](https://img.shields.io/badge/Category-Snow%20Coverage-blue?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiMyMTk2RjMiLz48L3N2Zz4=)
+
 1. 🦅 Bird droppings
 2. ✨ Clean panels (no faults)
 3. 🌫️ Dusty panels
@@ -62,13 +85,15 @@ This will open:
 
 ### Technologies Used
 
-- Python 3.8+
-- TensorFlow 2.x
-- Flask + Flask-RESTx
-- Streamlit
-- OpenCV
-- Plotly
-- MLflow
+![Python](https://img.shields.io/badge/Python-3.9-blue?style=flat&logo=python&logoColor=white)
+![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?style=flat&logo=tensorflow&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.95.0-009688?style=flat&logo=fastapi&logoColor=white)
+![Gradio](https://img.shields.io/badge/Gradio-3.x-F9D371?style=flat&logo=gradio&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=flat&logo=opencv&logoColor=white)
+![NumPy](https://img.shields.io/badge/NumPy-1.24.x-013243?style=flat&logo=numpy&logoColor=white)
+![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7.x-11557c?style=flat)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)
+![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?style=flat&logo=render&logoColor=white)
 
 ## Development Setup
 
@@ -151,6 +176,10 @@ docker run -p 5000:5000 -p 8501:8501 solar-panel-detector
 ```
 
 ## Deployment
+
+![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?style=flat&logo=render&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)
+![CI/CD](https://img.shields.io/badge/CI%2FCD-Automated-4CAF50?style=flat&logo=github-actions&logoColor=white)
 
 ### Render Deployment
 
