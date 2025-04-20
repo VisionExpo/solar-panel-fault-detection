@@ -46,6 +46,14 @@ artifacts/
 *.model
 downloads/
 
+# Large model files
+render_deployment/model/variables/variables.data-*
+deployment/model/variables/variables.data-*
+**/variables.data-*
+
+# Keep model structure files
+!**/variables.index
+
 # MLflow
 mlruns/
 
