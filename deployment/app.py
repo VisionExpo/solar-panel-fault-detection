@@ -107,59 +107,158 @@ def create_interface():
     # Create interface
     with gr.Blocks(title="Solar Panel Fault Detector") as interface:
         gr.Markdown("# Solar Panel Fault Detector")
-        gr.Markdown("Upload an image of a solar panel to detect faults.")
 
-        with gr.Row():
-            with gr.Column():
-                input_image = gr.Image(label="Input Image", type="numpy")
-                submit_button = gr.Button("Detect Faults")
+        # Create tabs for different sections
+        with gr.Tabs():
+            # Prediction tab
+            with gr.TabItem("Fault Detection"):
+                gr.Markdown("Upload an image of a solar panel to detect faults.")
 
-            with gr.Column():
-                output_image = gr.Image(label="Visualization")
-                output_json = gr.JSON(label="Prediction Results")
+                with gr.Row():
+                    with gr.Column():
+                        input_image = gr.Image(label="Input Image", type="numpy")
+                        submit_button = gr.Button("Detect Faults")
 
-        # Set up examples
-        examples_dir = os.path.join(project_root, "data", "examples")
-        example_images = []
-        if os.path.exists(examples_dir):
-            example_images = [os.path.join(examples_dir, f) for f in os.listdir(examples_dir)
-                             if f.endswith(('.jpg', '.jpeg', '.png'))]
+                    with gr.Column():
+                        output_image = gr.Image(label="Visualization")
+                        output_json = gr.JSON(label="Prediction Results")
 
-        if example_images:
-            gr.Examples(
-                examples=example_images,
-                inputs=input_image,
-            )
+                # Set up examples
+                examples_dir = os.path.join(project_root, "data", "examples")
+                example_images = []
+                if os.path.exists(examples_dir):
+                    example_images = [os.path.join(examples_dir, f) for f in os.listdir(examples_dir)
+                                    if f.endswith(('.jpg', '.jpeg', '.png'))]
 
-        # Set up event handlers
-        submit_button.click(
-            fn=predict_image,
-            inputs=input_image,
-            outputs=[output_image, output_json]
-        )
+                # If no examples in data/examples, try using some from the Faulty_solar_panel directory
+                if not example_images and os.path.exists('Faulty_solar_panel'):
+                    for class_dir in os.listdir('Faulty_solar_panel'):
+                        class_path = os.path.join('Faulty_solar_panel', class_dir)
+                        if os.path.isdir(class_path):
+                            files = [os.path.join(class_path, f) for f in os.listdir(class_path)
+                                    if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+                            if files:
+                                # Take up to 2 examples from each class
+                                example_images.extend(files[:2])
+                                if len(example_images) >= 10:
+                                    break
 
-        # Add description
-        gr.Markdown("""
-        ## About
+                if example_images:
+                    gr.Examples(
+                        examples=example_images,
+                        inputs=input_image,
+                    )
 
-        This application detects faults in solar panels using a deep learning model.
+                # Set up event handlers
+                submit_button.click(
+                    fn=predict_image,
+                    inputs=input_image,
+                    outputs=[output_image, output_json]
+                )
 
-        ### Fault Types
+            # Data Analysis tab
+            with gr.TabItem("Data Analysis"):
+                gr.Markdown("## Exploratory Data Analysis")
+                gr.Markdown("These visualizations show the characteristics of the training dataset.")
 
-        - **Bird-drop**: Solar panel with bird droppings on the surface
-        - **Clean**: Solar panel with no visible faults or issues
-        - **Dusty**: Solar panel covered with dust or dirt
-        - **Electrical-damage**: Solar panel with electrical damage
-        - **Physical-damage**: Solar panel with physical damage
-        - **Snow-covered**: Solar panel covered with snow
+                with gr.Row():
+                    # Check if visualization files exist
+                    vis_path = os.path.join(project_root, "visualization", "static")
 
-        ### Model Information
+                    if os.path.exists(os.path.join(vis_path, "class_distribution.png")):
+                        gr.Image(os.path.join(vis_path, "class_distribution.png"), label="Class Distribution")
+                    else:
+                        gr.Markdown("*Class distribution visualization not available*")
 
-        - Architecture: EfficientNetB3
-        - Input size: 300x300 pixels
-        - Accuracy: ~50%
-        - Top-3 Accuracy: ~80%
-        """)
+                with gr.Row():
+                    if os.path.exists(os.path.join(vis_path, "sample_images.png")):
+                        gr.Image(os.path.join(vis_path, "sample_images.png"), label="Sample Images")
+                    else:
+                        gr.Markdown("*Sample images visualization not available*")
+
+                with gr.Row():
+                    with gr.Column():
+                        if os.path.exists(os.path.join(vis_path, "dimension_distributions.png")):
+                            gr.Image(os.path.join(vis_path, "dimension_distributions.png"), label="Image Dimensions")
+                        else:
+                            gr.Markdown("*Image dimensions visualization not available*")
+
+                    with gr.Column():
+                        if os.path.exists(os.path.join(vis_path, "brightness_distribution.png")):
+                            gr.Image(os.path.join(vis_path, "brightness_distribution.png"), label="Brightness Distribution")
+                        else:
+                            gr.Markdown("*Brightness distribution visualization not available*")
+
+            # Model Performance tab
+            with gr.TabItem("Model Performance"):
+                gr.Markdown("## Training and Evaluation Results")
+                gr.Markdown("These visualizations show the performance of the trained model.")
+
+                with gr.Row():
+                    if os.path.exists(os.path.join(vis_path, "training_curves.png")):
+                        gr.Image(os.path.join(vis_path, "training_curves.png"), label="Training Curves")
+                    else:
+                        gr.Markdown("*Training curves visualization not available*")
+
+                with gr.Row():
+                    with gr.Column():
+                        if os.path.exists(os.path.join(vis_path, "confusion_matrix.png")):
+                            gr.Image(os.path.join(vis_path, "confusion_matrix.png"), label="Confusion Matrix")
+                        else:
+                            gr.Markdown("*Confusion matrix visualization not available*")
+
+                    with gr.Column():
+                        if os.path.exists(os.path.join(vis_path, "class_metrics.png")):
+                            gr.Image(os.path.join(vis_path, "class_metrics.png"), label="Class Metrics")
+                        else:
+                            gr.Markdown("*Class metrics visualization not available*")
+
+                # Load and display training summary if available
+                summary_path = os.path.join(vis_path, "training_summary.json")
+                if os.path.exists(summary_path):
+                    with open(summary_path, 'r') as f:
+                        summary = json.load(f)
+
+                    gr.Markdown(f"""
+                    ### Training Summary
+
+                    - **Epochs**: {summary.get('epochs', 'N/A')}
+                    - **Best Validation Accuracy**: {summary.get('best_val_acc', 'N/A'):.4f} (Epoch {summary.get('best_val_acc_epoch', 'N/A')})
+                    - **Final Validation Accuracy**: {summary.get('final_val_acc', 'N/A'):.4f}
+                    - **Best Validation Loss**: {summary.get('best_val_loss', 'N/A'):.4f} (Epoch {summary.get('best_val_loss_epoch', 'N/A')})
+                    - **Final Validation Loss**: {summary.get('final_val_loss', 'N/A'):.4f}
+                    """)
+                else:
+                    gr.Markdown("*Training summary not available*")
+
+            # About tab
+            with gr.TabItem("About"):
+                gr.Markdown("""
+                ## About
+
+                This application detects faults in solar panels using a deep learning model.
+
+                ### Fault Types
+
+                - **Bird-drop**: Solar panel with bird droppings on the surface
+                - **Clean**: Solar panel with no visible faults or issues
+                - **Dusty**: Solar panel covered with dust or dirt
+                - **Electrical-damage**: Solar panel with electrical damage
+                - **Physical-damage**: Solar panel with physical damage
+                - **Snow-covered**: Solar panel covered with snow
+
+                ### Model Information
+
+                - Architecture: EfficientNetB3
+                - Input size: 384x384 pixels
+                - Trained on a dataset of solar panel images with various fault types
+                - Uses transfer learning with pre-trained weights
+
+                ### Deployment Information
+
+                This model is deployed using Gradio for the web interface and can also be accessed via a FastAPI REST API.
+                The model can be deployed to cloud platforms like Render for production use.
+                """)
 
     return interface
 
