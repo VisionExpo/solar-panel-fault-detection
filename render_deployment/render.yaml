@@ -4,12 +4,14 @@ services:
   - type: web
     name: solar-panel-fault-detector
     env: python
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install -r requirements.txt && python download_model.py
     startCommand: python app.py
     envVars:
       - key: PYTHON_VERSION
         value: 3.9.0
       - key: PORT
         value: 7860
+      - key: MODEL_URL
+        value: YOUR_MODEL_DOWNLOAD_URL
     healthCheckPath: /
     

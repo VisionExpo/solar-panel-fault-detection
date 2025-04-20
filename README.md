@@ -180,13 +180,24 @@ docker run -p 5000:5000 -p 8501:8501 solar-panel-detector
 ![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?style=flat&logo=render&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)
 ![CI/CD](https://img.shields.io/badge/CI%2FCD-Automated-4CAF50?style=flat&logo=github-actions&logoColor=white)
+![Git LFS](https://img.shields.io/badge/Git%20LFS-Enabled-8A2BE2?style=flat&logo=git-lfs&logoColor=white)
+
+### Model Storage
+
+The model files are stored externally due to GitHub's file size limitations (100MB max). The deployment process automatically downloads the model files during build.
 
 ### Render Deployment
 
 1. Fork this repository
-2. Connect to Render
-3. Add required environment variables
-4. Deploy using the provided `render.yaml`
+2. Upload your model file to Google Drive or another storage service
+3. Update the `MODEL_URL` environment variable in `render.yaml` with your model download URL
+4. Connect to Render
+5. Deploy using the provided `render.yaml`
+
+### Environment Variables
+
+- `PORT`: The port on which the application will run (default: 7860)
+- `MODEL_URL`: URL to download the model file (required for deployment)
 
 ### Local Deployment
 

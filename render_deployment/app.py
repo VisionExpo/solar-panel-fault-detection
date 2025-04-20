@@ -307,4 +307,4 @@ if __name__ == "__main__":
     interface = create_interface()
 
     # Launch interface
-    interface.launch(server_name="0.0.0.0", server_port=7860)
+    interface.launch(server_name="0.0.0.0", server_port=7861)
