@@ -169,12 +169,43 @@ curl -X POST http://localhost:5000/batch_predict \
 curl http://localhost:5000/metrics
 ```
 
-## Model Performance
+## 📊 Model Performance
 
-- Average inference time: ~150ms
-- Batch processing: Up to 32 images
-- GPU utilization: Optimized for NVIDIA GPUs
-- CPU fallback: Automatically detects available hardware
+- **Accuracy**: ~85% on test set
+- **F1 Score**: ~0.83 across all classes
+- **Inference Time**: ~150ms per image
+- **Model Architecture**: EfficientNetB3 with custom top layers
+- **Input Size**: 384x384 pixels
+- **Batch processing**: Up to 32 images
+- **GPU utilization**: Optimized for NVIDIA GPUs
+- **CPU fallback**: Automatically detects available hardware
+
+## 🧠 Training Process
+
+The model was trained on the [Solar Augmented Dataset](https://www.kaggle.com/datasets/gitenavnath/solar-augmented-dataset) from Kaggle, which contains images of solar panels in various conditions.
+
+### Dataset Details
+
+- **Classes**: 6 (Bird-drop, Clean, Dusty, Electrical-damage, Physical-damage, Snow-covered)
+- **Images**: ~3,000 images across all classes
+- **Split**: 70% training, 15% validation, 15% testing
+- **Augmentation**: Rotation, shift, shear, zoom, and horizontal flip
+
+### Training Strategy
+
+1. **Transfer Learning**: Started with EfficientNetB3 pre-trained on ImageNet
+2. **Initial Training**: Trained the top layers with the base model frozen
+3. **Fine-tuning**: Unfroze the last 30 layers and fine-tuned with a lower learning rate
+4. **Regularization**: Used dropout (0.3) and early stopping to prevent overfitting
+
+### Training Parameters
+
+- **Batch Size**: 32
+- **Image Size**: 384x384 pixels
+- **Initial Learning Rate**: 0.001
+- **Fine-tuning Learning Rate**: 0.0001
+- **Optimizer**: Adam
+- **Loss Function**: Categorical Cross-Entropy
 
 ## Configuration
 
