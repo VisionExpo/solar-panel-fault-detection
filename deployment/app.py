@@ -47,23 +47,39 @@ def predict_image(image):
         Dictionary with prediction results and visualization
     """
     if image is None:
-        return {
-            "error": "No image provided"
-        }
+        logger.error("No image provided")
+        return None, {"error": "No image provided"}
 
     try:
+        logger.info(f"Received image with shape: {image.shape}, dtype: {image.dtype}")
+
         # Convert from BGR to RGB (Gradio uses BGR)
         if len(image.shape) == 3 and image.shape[2] == 3:
+            logger.info("Converting image from BGR to RGB")
             image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
 
-        # Get predictions
+        # Check for NaN or infinity values
+        if np.isnan(image).any() or np.isinf(image).any():
+            logger.error("Image contains NaN or infinity values")
+            return None, {"error": "Image contains invalid values"}
+
+        # Check image dimensions
+        logger.info(f"Image dimensions after conversion: {image.shape}")
+
+        # Get predictions - only call the model once
+        logger.info("Getting predictions from model")
         predictions = detector.predict(image)
+        logger.info(f"Raw predictions: {predictions}")
 
-        # Get top prediction
-        top_class, confidence = detector.classify_image(image)
+        # Get top prediction using the same predictions
+        logger.info("Getting top prediction")
+        top_class, confidence = detector.classify_image(image, predictions=predictions)
+        logger.info(f"Top class: {top_class}, confidence: {confidence}")
 
-        # Get top 3 predictions
-        top_3 = detector.get_top_k_predictions(image, k=3)
+        # Get top 3 predictions using the same predictions
+        logger.info("Getting top 3 predictions")
+        top_3 = detector.get_top_k_predictions(image, k=3, predictions=predictions)
+        logger.info(f"Top 3 predictions: {top_3}")
 
         # Create result dictionary
         result = {
@@ -79,22 +95,29 @@ def predict_image(image):
                 for class_name, conf in predictions.items()
             }
         }
+        logger.info("Created result dictionary")
 
         # Create visualization
+        logger.info("Creating visualization")
         vis_image = image.copy()
 
         # Add text with prediction
         font = cv2.FONT_HERSHEY_SIMPLEX
         text = f"{top_class}: {confidence:.2f}"
         cv2.putText(vis_image, text, (10, 30), font, 1, (0, 255, 0), 2, cv2.LINE_AA)
+        logger.info("Added text to visualization")
 
         # Convert back to BGR for Gradio
+        logger.info("Converting visualization back to BGR")
         vis_image = cv2.cvtColor(vis_image, cv2.COLOR_RGB2BGR)
+        logger.info("Returning results")
 
         return vis_image, result
 
     except Exception as e:
+        import traceback
         logger.error(f"Error in prediction: {e}")
+        logger.error(traceback.format_exc())
         return None, {"error": str(e)}
 
 def create_interface():
@@ -306,5 +329,8 @@ if __name__ == "__main__":
     # Create interface
     interface = create_interface()
 
-    # Launch interface
-    interface.launch(server_name="0.0.0.0", server_port=7861)
+    # Launch interface with basic settings
+    interface.launch(
+        server_name="0.0.0.0",
+        server_port=int(os.environ.get("PORT", 7861))
+    )
