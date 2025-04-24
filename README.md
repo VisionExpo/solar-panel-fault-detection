@@ -1,32 +1,33 @@
-# Solar Panel Fault Detection System
+# 🔍 Solar Panel Fault Detection System
+
+<div align="center">
 
 ![Version](https://img.shields.io/badge/version-1.0-blue?style=flat)
 ![Status](https://img.shields.io/badge/status-active-success?style=flat)
-![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat)
-
-A deep learning system for detecting and classifying faults in solar panels using computer vision.
-
-## Tech Stack
-
 ![Python](https://img.shields.io/badge/Python-3.9-blue?style=flat&logo=python&logoColor=white)
 ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?style=flat&logo=tensorflow&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.95.0-009688?style=flat&logo=fastapi&logoColor=white)
 ![Gradio](https://img.shields.io/badge/Gradio-3.x-F9D371?style=flat&logo=gradio&logoColor=white)
 ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=flat&logo=opencv&logoColor=white)
-![NumPy](https://img.shields.io/badge/NumPy-1.24.x-013243?style=flat&logo=numpy&logoColor=white)
-![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7.x-11557c?style=flat)
 ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white)
 ![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?style=flat&logo=render&logoColor=white)
+![License](https://img.shields.io/badge/license-Apache%202.0-blue?style=flat)
+![Git LFS](https://img.shields.io/badge/Git%20LFS-Enabled-8A2BE2?style=flat&logo=git-lfs&logoColor=white)
 
-## Features
+</div>
 
-- 🔍 Real-time fault detection
-- 📊 Interactive web interface built with Streamlit
-- 🚀 RESTful API with batch processing support
-- 📈 Real-time performance monitoring
-- 🎯 Support for 6 fault categories
-- ⚡ GPU-accelerated inference
-- 📱 Mobile-friendly interface
+A deep learning system for detecting and classifying faults in solar panels using computer vision and machine learning.
+
+## ✨ Features
+
+- 🔍 **Real-time Fault Detection**: Identify solar panel faults from images with high accuracy
+- 📊 **Interactive Web Interface**: User-friendly Gradio interface for easy interaction
+- 🚀 **REST API**: FastAPI-powered API for integration with other systems
+- 📈 **Visualization Tools**: Comprehensive visualizations for EDA and model performance
+- 🎯 **Multi-class Classification**: Support for 6 different fault categories
+- ⚡ **Optimized Inference**: Fast and efficient GPU-accelerated model inference
+- 📱 **Responsive Design**: Mobile-friendly interface for on-the-go inspections
+- 🔄 **Batch Processing**: Process multiple images in batch mode
 
 ## Quick Start
 
@@ -57,7 +58,7 @@ This will open:
 - Web Interface: http://localhost:8501
 - API Documentation: http://localhost:5000/docs
 
-## Supported Fault Categories
+## 🧩 Supported Fault Categories
 
 ![Bird Droppings](https://img.shields.io/badge/Category-Bird%20Droppings-yellow?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiNGRkQxMDAiLz48L3N2Zz4=)
 ![Clean](https://img.shields.io/badge/Category-Clean-brightgreen?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiM0Q0FGNTAiLz48L3N2Zz4=)
@@ -66,16 +67,49 @@ This will open:
 ![Physical Damage](https://img.shields.io/badge/Category-Physical%20Damage-orange?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiNGRjk4MDAiLz48L3N2Zz4=)
 ![Snow Coverage](https://img.shields.io/badge/Category-Snow%20Coverage-blue?style=flat&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCI+PHBhdGggZD0iTTAgMGgyNHYyNEgweiIgZmlsbD0ibm9uZSIvPjxwYXRoIGQ9Ik0xMiAyYzUuNTIgMCAxMCA0LjQ4IDEwIDEwcy00LjQ4IDEwLTEwIDEwUzIgMTcuNTIgMiAxMiA2LjQ4IDIgMTIgMnoiIGZpbGw9IiMyMTk2RjMiLz48L3N2Zz4=)
 
-1. 🦅 Bird droppings
-2. ✨ Clean panels (no faults)
-3. 🌫️ Dusty panels
-4. ⚡ Electrical damage
-5. 💢 Physical damage
-6. ❄️ Snow coverage
+1. 🦅 **Bird droppings**: Solar panel with bird droppings on the surface
+2. ✨ **Clean panels**: Solar panel with no visible faults or issues
+3. 🌫️ **Dusty panels**: Solar panel covered with dust or dirt
+4. ⚡ **Electrical damage**: Solar panel with electrical damage
+5. 💢 **Physical damage**: Solar panel with physical damage
+6. ❄️ **Snow coverage**: Solar panel covered with snow
 
-## System Architecture
+## 🚀 Tech Stack
 
-### Components
+<div align="center">
+
+| Technology | Purpose |
+|------------|---------|
+| ![Python](https://img.shields.io/badge/Python-3.9-blue?style=flat&logo=python&logoColor=white) | Core language |
+| ![TensorFlow](https://img.shields.io/badge/TensorFlow-2.x-orange?style=flat&logo=tensorflow&logoColor=white) | Deep learning framework |
+| ![FastAPI](https://img.shields.io/badge/FastAPI-0.95.0-009688?style=flat&logo=fastapi&logoColor=white) | API framework |
+| ![Gradio](https://img.shields.io/badge/Gradio-3.x-F9D371?style=flat&logo=gradio&logoColor=white) | Web interface |
+| ![OpenCV](https://img.shields.io/badge/OpenCV-4.x-5C3EE8?style=flat&logo=opencv&logoColor=white) | Image processing |
+| ![NumPy](https://img.shields.io/badge/NumPy-1.24.x-013243?style=flat&logo=numpy&logoColor=white) | Numerical computing |
+| ![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7.x-11557c?style=flat) | Data visualization |
+| ![Docker](https://img.shields.io/badge/Docker-Ready-2496ED?style=flat&logo=docker&logoColor=white) | Containerization |
+| ![Render](https://img.shields.io/badge/Render-Deployment-46E3B7?style=flat&logo=render&logoColor=white) | Cloud deployment |
+
+</div>
+
+## 🏗️ System Architecture
+
+```ascii
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│                 │     │                 │     │                 │
+│  Web Interface  │────▶│  Backend API    │────▶│  ML Model       │
+│  (Gradio)       │     │  (FastAPI)      │     │  (TensorFlow)   │
+│                 │     │                 │     │                 │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                               │
+                               ▼
+                 ┌─────────────────────────────┐
+                 │                             │
+                 │  Image Processing Pipeline  │
+                 │  (OpenCV)                   │
+                 │                             │
+                 └─────────────────────────────┘
+```
 
 - **Frontend**: Streamlit web interface
 - **Backend**: Flask RESTful API
@@ -224,5 +258,5 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 ## Contact
 
 - Author: Vishal Gorule
-- Email: gorulevishal984@gmail.com
+- Email: [gorulevishal984@gmail.com](mailto:gorulevishal984@gmail.com)
 - GitHub: [@VisionExpo](https://github.com/VisionExpo)
