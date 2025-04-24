@@ -218,24 +218,30 @@ docker run -p 5000:5000 -p 8501:8501 solar-panel-detector
 
 ### Model Storage
 
-The model files are stored externally due to GitHub's file size limitations (100MB max). The deployment process automatically downloads the model files during build.
+The model files are stored externally on [Hugging Face Model Hub](https://huggingface.co/VishalGorule09/SolarPanelModel) due to GitHub's file size limitations (100MB max). The deployment process automatically downloads the model files during build.
 
 ### Render Deployment
 
 1. Fork this repository
-2. Upload your model file to Google Drive or another storage service
-3. Update the `MODEL_URL` environment variable in `render.yaml` with your model download URL
-4. Connect to Render
-5. Deploy using the provided `render.yaml`
+2. Connect to Render
+3. Deploy using the provided `render.yaml` (the model will be automatically downloaded from Hugging Face)
 
-### Environment Variables
+The deployment is configured to download the model from Hugging Face Model Hub. If you want to use your own model:
+
+1. Upload your model file to Hugging Face or another storage service
+2. Update the `MODEL_URL` environment variable in `render.yaml` with your model download URL
+
+### Configuration
+
+#### Environment Variables
 
 - `PORT`: The port on which the application will run (default: 7860)
-- `MODEL_URL`: URL to download the model file (required for deployment)
+- `MODEL_URL`: URL to download the model file (defaults to Hugging Face URL)
 
 ### Local Deployment
 
 Use `waitress` (Windows) or `gunicorn` (Linux) for production:
+
 ```bash
 # Windows
 waitress-serve --port=5000 app:app
@@ -261,10 +267,6 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - Email: [gorulevishal984@gmail.com](mailto:gorulevishal984@gmail.com)
 - GitHub: [@VisionExpo](https://github.com/VisionExpo)
 
-
-
-<div align="center">
+---
 
 Made with ❤️ by [Vishal Gorule](https://github.com/VisionExpo)
-
-</div>

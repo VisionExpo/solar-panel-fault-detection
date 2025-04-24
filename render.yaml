@@ -19,6 +19,8 @@ services:
         sync: false  # Indicates this should be set manually in Render dashboard
       - key: WANDB_API_KEY
         sync: false  # Indicates this should be set manually in Render dashboard
+      - key: MODEL_URL
+        value: https://huggingface.co/VishalGorule09/SolarPanelModel/resolve/main/variables.data-00000-of-00001
     autoDeploy: true
     disk:
       name: artifacts
