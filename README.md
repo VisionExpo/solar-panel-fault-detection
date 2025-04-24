@@ -260,3 +260,11 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 - Author: Vishal Gorule
 - Email: [gorulevishal984@gmail.com](mailto:gorulevishal984@gmail.com)
 - GitHub: [@VisionExpo](https://github.com/VisionExpo)
+
+
+
+<div align="center">
+
+Made with ❤️ by [Vishal Gorule](https://github.com/VisionExpo)
+
+</div>
