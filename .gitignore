@@ -72,4 +72,4 @@ htmlcov/
 .docker/
 
 # Downloaded images
-Faulty_solar_panel/
+data/
