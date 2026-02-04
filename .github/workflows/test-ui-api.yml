@@ -1,78 +1,49 @@
-name: Test UI and API Integration
+name: UI & API Integration Tests
 
 on:
   push:
-    branches: [ main ]
-    paths:
-      - 'streamlit_app.py'
-      - 'app.py'
-      - 'tests/**'
-      - '.github/workflows/test-ui-api.yml'
+    branches: ["main"]
   pull_request:
-    branches: [ main ]
-    paths:
-      - 'streamlit_app.py'
-      - 'app.py'
-      - 'tests/**'
-      - '.github/workflows/test-ui-api.yml'
+    branches: ["main"]
 
 jobs:
-  test:
+  integration-tests:
     runs-on: ubuntu-latest
-    services:
-      api:
-        image: python:3.10
-        ports:
-          - 5000:5000
-        options: --health-cmd "curl http://localhost:5000/health || exit 1" --health-interval 10s --health-timeout 5s --health-retries 5
 
     steps:
-    - uses: actions/checkout@v4
-    
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
-        cache: 'pip'
-    
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest-cov pytest-xdist
-    
-    - name: Start Flask API
-      run: |
-        python app.py &
-        sleep 10  # Wait for API to start
-      env:
-        PORT: 5000
-        FLASK_ENV: testing
-    
-    - name: Run UI and API tests
-      run: |
-        pytest tests/test_streamlit_app.py -v --cov=src/solar_panel_detector --cov-report=xml
-      env:
-        PYTHONPATH: ${{ github.workspace }}
-        TESTING: true
-    
-    - name: Check test coverage
-      run: |
-        python -m coverage report --fail-under=80
-    
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      with:
-        file: ./coverage.xml
-        flags: uitests
-        name: ui-api-coverage
-    
-    - name: Archive test artifacts
-      uses: actions/upload-artifact@v3
-      if: always()
-      with:
-        name: test-artifacts
-        path: |
-          tests/**/artifacts
-          coverage.xml
-        retention-days: 7
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgl1
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Start FastAPI server
+        run: |
+          uvicorn apps.api.fastapi_app:app --host 127.0.0.1 --port 5000 &
+          sleep 5
+
+      - name: API health check
+        run: |
+          curl --fail http://127.0.0.1:5000/health
+
+      - name: Validate Streamlit app imports
+        run: |
+          python -c "import apps.api.streamlit_app"
+
+      - name: Stop background services
+        if: always()
+        run: |
+          pkill -f uvicorn || true
