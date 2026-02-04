@@ -73,3 +73,13 @@ htmlcov/
 
 # Downloaded images
 data/
+
+batch_output/
+assets/generated/
+*.png
+*.jpg
+*.jpeg
+*.csv
+*.json
+.env
+kaggle.json
