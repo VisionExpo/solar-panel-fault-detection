@@ -8,10 +8,10 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://solar-panel-fault-detection.onrender.com
+    description: Production (Render)
   - url: http://localhost:5000
-    description: Local development server
-  - url: https://<your-render-url>
-    description: Production server (Render)
+    description: Local development
 
 paths:
   /health:
