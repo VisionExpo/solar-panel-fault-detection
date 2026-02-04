@@ -27,3 +27,5 @@ tests/
 mlruns/
 wandb/
 artifacts/
+
+kaggle.json
