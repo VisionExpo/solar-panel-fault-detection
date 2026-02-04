@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: solar-panel-fault-detection-api
+    runtime: python
+    region: singapore
+    plan: free
+
+    buildCommand: |
+      pip install --upgrade pip
+      pip install -r deployment/render/requirements.txt
+      pip install -e .
+
+    startCommand: |
+      uvicorn deployment.render.app:app --host 0.0.0.0 --port 5000
+
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.10
