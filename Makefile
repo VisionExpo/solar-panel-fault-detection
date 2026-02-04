@@ -1,54 +1,73 @@
-.PHONY: setup test test-ui test-api test-all coverage run-api run-ui run-all clean
+# ======================
+# Project Makefile
+# ======================
 
-# Python settings
-PYTHON = python
-VENV = venv
-PIP = $(VENV)/Scripts/pip
-PYTEST = $(VENV)/Scripts/pytest
-COVERAGE = $(VENV)/Scripts/coverage
-STREAMLIT = $(VENV)/Scripts/streamlit
-FLASK = $(VENV)/Scripts/flask
+.PHONY: help install clean lint test train evaluate infer api ui docker-build docker-up docker-down
 
-# Project settings
-FLASK_APP = app.py
-STREAMLIT_APP = streamlit_app.py
-TEST_PATH = tests
-COVERAGE_PATH = src
+# Default target
+help:
+	@echo "Available commands:"
+	@echo "  make install        Install dependencies"
+	@echo "  make clean          Remove cache and build artifacts"
+	@echo "  make test           Run all tests"
+	@echo "  make train          Run training pipeline"
+	@echo "  make evaluate       Run evaluation pipeline"
+	@echo "  make infer          Run inference pipeline"
+	@echo "  make api            Run FastAPI server locally"
+	@echo "  make ui             Run Streamlit app"
+	@echo "  make docker-build   Build Docker image"
+	@echo "  make docker-up      Start services via docker-compose"
+	@echo "  make docker-down    Stop docker-compose services"
 
-setup:
-	$(PYTHON) -m venv $(VENV)
-	$(PIP) install -r requirements.txt
-	$(PIP) install -e ".[dev]"
-
-test-ui:
-	$(PYTEST) $(TEST_PATH)/test_streamlit_app.py -v --cov=$(COVERAGE_PATH) --cov-report=html
-
-test-api:
-	$(PYTEST) $(TEST_PATH)/test_data_and_api.py -v --cov=$(COVERAGE_PATH) --cov-report=html
-
-test:
-	$(PYTEST) $(TEST_PATH) -v --cov=$(COVERAGE_PATH) --cov-report=html
-
-coverage:
-	$(COVERAGE) report
-	$(COVERAGE) html
-	@echo "HTML coverage report generated in htmlcov/"
-
-run-api:
-	$(PYTHON) $(FLASK_APP)
-
-run-ui:
-	$(STREAMLIT) run $(STREAMLIT_APP)
-
-run-all:
-	$(PYTHON) start_apps.py
+# ======================
+# Environment
+# ======================
+install:
+	pip install --upgrade pip
+	pip install -r requirements.txt
+	pip install -e .
 
 clean:
-	rm -rf $(VENV)
-	rm -rf __pycache__
-	rm -rf .pytest_cache
-	rm -rf .coverage
-	rm -rf htmlcov
-	rm -rf .streamlit/secrets.toml
-	rm -rf artifacts/metrics/*
-	rm -rf artifacts/monitoring/*
+	rm -rf __pycache__ .pytest_cache .mypy_cache build dist *.egg-info
+
+# ======================
+# Quality
+# ======================
+test:
+	pytest -v
+
+lint:
+	@echo "Linting placeholder (add ruff/flake8 later)"
+
+# ======================
+# Pipelines
+# ======================
+train:
+	python pipelines/train.py
+
+evaluate:
+	python pipelines/evaluate.py
+
+infer:
+	python pipelines/inference.py
+
+# ======================
+# Apps
+# ======================
+api:
+	uvicorn apps.api.fastapi_app:app --host 0.0.0.0 --port 5000 --reload
+
+ui:
+	streamlit run apps/api/streamlit_app.py
+
+# ======================
+# Docker
+# ======================
+docker-build:
+	docker build -f deployment/docker/Dockerfile -t solar-fault-detector .
+
+docker-up:
+	docker-compose -f deployment/docker/docker-compose.yml up --build
+
+docker-down:
+	docker-compose -f deployment/docker/docker-compose.yml down
