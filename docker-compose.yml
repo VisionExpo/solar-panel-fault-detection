@@ -3,13 +3,10 @@ version: "3.9"
 services:
   solar-fault-api:
     build:
-      context: ../..
-      dockerfile: deployment/docker/Dockerfile
+      context: .
     container_name: solar_fault_detector_api
     ports:
       - "5000:5000"
-    environment:
-      - PYTHONUNBUFFERED=1
     volumes:
-      - ../../artifacts:/app/artifacts
+      - ./artifacts:/app/artifacts
     restart: unless-stopped
