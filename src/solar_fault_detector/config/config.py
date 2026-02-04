@@ -1,7 +1,9 @@
 from dataclasses import dataclass
 from pathlib import Path
-import os
 
+# ======================
+# Data Configuration
+# ======================
 @dataclass
 class DataConfig:
     root_dir: Path = Path("artifacts")
@@ -11,26 +13,41 @@ class DataConfig:
     test_ratio: float = 0.1
     random_state: int = 42
 
+
+# ======================
+# Model Configuration
+# ======================
 @dataclass
 class ModelConfig:
-    img_size: tuple = (384, 384)  # Increased image size for better performance
+    img_size: tuple = (384, 384)
     num_channels: int = 3
     num_classes: int = 6
-    batch_size: int = 16  # Reduced batch size due to larger model
+    batch_size: int = 16
     epochs: int = 50
-    learning_rate: float = 0.0005  # Reduced learning rate for stability
-    early_stopping_patience: int = 8  # Increased patience
+    learning_rate: float = 5e-4
+    early_stopping_patience: int = 8
+
     model_dir: Path = Path("artifacts/models")
     best_model_path: Path = Path("artifacts/models/best_model.h5")
 
+
+# ======================
+# Training / Experiment Tracking
+# ======================
 @dataclass
 class TrainingConfig:
-    mlflow_tracking_uri: str = "sqlite:///mlflow.db"
-    experiment_name: str = "solar_panel_fault_detection"
-    run_name: str = "baseline_run"
+    use_wandb: bool = True
     wandb_project: str = "solar_panel_fault_detection"
-    wandb_entity: str = "gorulevishal984"  # Add your wandb username here instead of organization
+    wandb_entity: str = "gorulevishal984"
+    wandb_run_group: str = "baseline"
+    wandb_mode: str = "online"   # online | offline | disabled
+    log_images: bool = True
+    log_confusion_matrix: bool = True
 
+
+# ======================
+# Data Augmentation
+# ======================
 @dataclass
 class AugmentationConfig:
     rotation_range: int = 20
@@ -41,6 +58,10 @@ class AugmentationConfig:
     horizontal_flip: bool = True
     fill_mode: str = "nearest"
 
+
+# ======================
+# Unified Config
+# ======================
 @dataclass
 class Config:
     data: DataConfig = DataConfig()
