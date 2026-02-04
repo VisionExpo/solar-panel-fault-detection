@@ -1,5 +1,3 @@
-# tests/test_model.py
-
 import tensorflow as tf
 
 from solar_fault_detector.config.config import ModelConfig
