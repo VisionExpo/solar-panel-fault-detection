@@ -1,19 +1,17 @@
-[theme]
-primaryColor = "#1f77b4"
-backgroundColor = "#ffffff"
-secondaryBackgroundColor = "#f0f2f6"
-textColor = "#262730"
-font = "sans serif"
-
 [server]
+headless = true
 port = 8501
+enableCORS = false
+enableXsrfProtection = false
 maxUploadSize = 200
-enableXsrfProtection = true
-enableCORS = true
-enableWebsocketCompression = false
-
-[runner]
-fastReruns = true
 
 [browser]
 gatherUsageStats = false
+
+[theme]
+base = "light"
+primaryColor = "#2E7D32"
+backgroundColor = "#FFFFFF"
+secondaryBackgroundColor = "#F4F6F8"
+textColor = "#263238"
+font = "sans serif"
