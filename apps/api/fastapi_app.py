@@ -1,12 +1,20 @@
 from pathlib import Path
 import shutil
 import uuid
+import logging
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.inference.predictor import Predictor
+from solar_fault_detector.utils.download_model import ensure_model_exists
+
+# ======================
+# Logging Setup
+# ======================
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # ======================
 # App Initialization
@@ -18,15 +26,26 @@ app = FastAPI(
 )
 
 config = Config()
-
-MODEL_PATH = config.model.best_model_path
 UPLOAD_DIR = Path("artifacts/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 
-predictor = Predictor(
-    model_path=MODEL_PATH,
-    config=config.model,
-)
+# ======================
+# Model Loading with Fallback
+# ======================
+try:
+    MODEL_PATH = ensure_model_exists(config.model.best_model_path)
+    logger.info(f"Loading model from: {MODEL_PATH}")
+    
+    predictor = Predictor(
+        model_path=MODEL_PATH,
+        config=config.model,
+    )
+    MODEL_READY = True
+    logger.info("✅ Model loaded successfully")
+except Exception as e:
+    logger.error(f"❌ Failed to load model: {e}")
+    predictor = None
+    MODEL_READY = False
 
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png"}
 
@@ -36,7 +55,10 @@ ALLOWED_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png"}
 # ======================
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    return {
+        "status": "ok" if MODEL_READY else "model_not_ready",
+        "model_loaded": MODEL_READY,
+    }
 
 
 # ======================
@@ -44,6 +66,12 @@ def health_check():
 # ======================
 @app.post("/predict")
 async def predict_image(file: UploadFile = File(...)):
+    if not MODEL_READY:
+        raise HTTPException(
+            status_code=503,
+            detail="Model not loaded. Service unavailable. Check server logs.",
+        )
+    
     if file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=400,

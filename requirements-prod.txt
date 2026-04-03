@@ -1,0 +1,21 @@
+# ======================
+# Production Requirements (Inference Only)
+# Optimized for Render deployment
+# ======================
+
+# Core ML (Inference Only - no training)
+tensorflow>=2.13,<3.0
+numpy>=1.23
+Pillow>=9.5
+
+# API
+fastapi>=0.100
+uvicorn>=0.23
+pydantic>=2.0
+
+# Production utilities
+python-dotenv>=1.0
+tqdm>=4.66
+
+# Optional: Model download from Hugging Face
+huggingface-hub>=0.16

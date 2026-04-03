@@ -48,6 +48,30 @@ downloads/
 
 # Large model files
 render_deployment/model/variables/variables.data-*
+
+# Development only (don't sync to repo)
+pipelines/
+research/
+scripts/download_dataset.py
+scripts/prepare_deployment.py
+tests/
+docker-compose.yml
+Makefile
+.streamlit/
+apps/cli/
+
+# Jupyter
+.ipynb_checkpoints/
+*.ipynb
+
+# Experiment tracking
+mlruns/
+wandb/
+.wandb/
+
+# OS
+.DS_Store
+Thumbs.db
 deployment/model/variables/variables.data-*
 **/variables.data-*
 

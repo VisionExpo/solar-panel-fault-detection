@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /app
 
-# Install dependencies
-COPY requirements.txt .
+# Install production dependencies only
+COPY requirements-prod.txt .
 RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+    && pip install --no-cache-dir -r requirements-prod.txt
 
 # Copy source
 COPY src/ src/
@@ -18,11 +18,14 @@ COPY apps/ apps/
 COPY setup.py .
 COPY openapi.yaml .
 
-# 🔑 THIS IS THE FIX
+# Set Python path
 ENV PYTHONPATH=/app/src
 
 # Install package
 RUN pip install -e .
+
+# Download model during build
+RUN python -m solar_fault_detector.utils.download_model
 
 EXPOSE 5000
 

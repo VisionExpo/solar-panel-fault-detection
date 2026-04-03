@@ -1,6 +1,7 @@
 # Version control
 .git
 .gitignore
+.github
 
 # Python
 __pycache__
@@ -11,12 +12,21 @@ __pycache__
 venv/
 .env
 
+# Development only
+pipelines/
+research/
+scripts/
+tests/
+docker-compose.yml
+Makefile
+.streamlit/
+apps/cli/
+
 # Project specific
 Faulty_solar_panel/
 downloads/
 logs/
 *.ipynb
-tests/
 .pytest_cache/
 
 # IDE
@@ -26,6 +36,12 @@ tests/
 # MLflow and Wandb
 mlruns/
 wandb/
-artifacts/
+.wandb/
+
+# Large files
+*.h5
+*.hdf5
+*.model
+*.pkl
 
 kaggle.json
