@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 # ======================
@@ -64,7 +64,7 @@ class AugmentationConfig:
 # ======================
 @dataclass
 class Config:
-    data: DataConfig = DataConfig()
-    model: ModelConfig = ModelConfig()
-    training: TrainingConfig = TrainingConfig()
-    augmentation: AugmentationConfig = AugmentationConfig()
+    data: DataConfig = field(default_factory=DataConfig)
+    model: ModelConfig = field(default_factory=ModelConfig)
+    training: TrainingConfig = field(default_factory=TrainingConfig)
+    augmentation: AugmentationConfig = field(default_factory=AugmentationConfig)
