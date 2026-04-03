@@ -20,6 +20,7 @@ COPY openapi.yaml .
 
 # Set Python path
 ENV PYTHONPATH=/app/src
+ENV REQUIREMENTS_FILE=requirements-prod.txt
 
 # Install package
 RUN pip install -e .
