@@ -28,16 +28,20 @@ seaborn>=0.12
 Pillow>=9.5
 
 # ======================
-# Utilities
+# Explainability & Interpretability
 # ======================
-python-dotenv>=1.0
-tqdm>=4.66
+lime>=0.2
+shap>=0.42
 
 # ======================
 # Testing
 # ======================
 pytest>=7.4
 pytest-cov>=4.1
+pytest-mock>=3.10
+black>=23.0
+flake8>=6.0
+mypy>=1.0
 
 # ======================
 # Dev / Tooling
