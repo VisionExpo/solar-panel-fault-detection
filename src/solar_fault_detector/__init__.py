@@ -31,7 +31,10 @@ _LAZY_EXPORTS = {
     "Config": ("solar_fault_detector.config.config", "Config"),
     "ModelFactory": ("solar_fault_detector.models.factory", "ModelFactory"),
     "Predictor": ("solar_fault_detector.inference.predictor", "Predictor"),
-    "BatchInferenceEngine": ("solar_fault_detector.inference.batch", "BatchInferenceEngine"),
+    "BatchInferenceEngine": (
+        "solar_fault_detector.inference.batch",
+        "BatchInferenceEngine",
+    ),
 }
 
 
@@ -48,9 +51,10 @@ def __getattr__(name: str) -> Any:
     globals()[name] = value
     return value
 
+
 __all__ = [
     "Config",
-    "ModelFactory", 
+    "ModelFactory",
     "Predictor",
     "BatchInferenceEngine",
 ]

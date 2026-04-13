@@ -21,6 +21,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ExperimentConfig:
     """Configuration for A/B test experiment."""
+
     name: str
     variants: List[str]  # e.g., ['model_v1', 'model_v2']
     traffic_split: Dict[str, float]  # e.g., {'model_v1': 0.5, 'model_v2': 0.5}
@@ -32,6 +33,7 @@ class ExperimentConfig:
 @dataclass
 class ExperimentResult:
     """Results from A/B test experiment."""
+
     experiment_name: str
     variant: str
     metrics: Dict[str, float]
@@ -121,7 +123,7 @@ class ABTester:
         experiment_name: str,
         variant: str,
         metrics: Dict[str, float],
-        user_id: str = None
+        user_id: str = None,
     ) -> None:
         """
         Record experiment result.
@@ -137,7 +139,7 @@ class ABTester:
             variant=variant,
             metrics=metrics,
             sample_size=1,
-            timestamp=time.time()
+            timestamp=time.time(),
         )
 
         self.results.append(result)
@@ -159,8 +161,7 @@ class ABTester:
             DataFrame with experiment results
         """
         experiment_results = [
-            r for r in self.results
-            if r.experiment_name == experiment_name
+            r for r in self.results if r.experiment_name == experiment_name
         ]
 
         if not experiment_results:
@@ -170,9 +171,9 @@ class ABTester:
         data = []
         for result in experiment_results:
             row = {
-                'variant': result.variant,
-                'timestamp': result.timestamp,
-                **result.metrics
+                "variant": result.variant,
+                "timestamp": result.timestamp,
+                **result.metrics,
             }
             data.append(row)
 
@@ -200,20 +201,17 @@ class ABTester:
         analysis = {
             "experiment_name": experiment_name,
             "total_samples": len(df),
-            "variants": {}
+            "variants": {},
         }
 
         # Analyze each variant
         for variant in config.variants:
-            variant_data = df[df['variant'] == variant]
+            variant_data = df[df["variant"] == variant]
 
             if len(variant_data) == 0:
                 continue
 
-            variant_analysis = {
-                "sample_size": len(variant_data),
-                "metrics": {}
-            }
+            variant_analysis = {"sample_size": len(variant_data), "metrics": {}}
 
             # Calculate metrics for each tracked metric
             for metric in config.metrics:
@@ -223,7 +221,7 @@ class ABTester:
                         "mean": float(values.mean()),
                         "std": float(values.std()),
                         "min": float(values.min()),
-                        "max": float(values.max())
+                        "max": float(values.max()),
                     }
 
             analysis["variants"][variant] = variant_analysis
@@ -234,7 +232,9 @@ class ABTester:
 
         return analysis
 
-    def _test_significance(self, df: pd.DataFrame, config: ExperimentConfig) -> Dict[str, Any]:
+    def _test_significance(
+        self, df: pd.DataFrame, config: ExperimentConfig
+    ) -> Dict[str, Any]:
         """Perform statistical significance tests between variants."""
         variant_a, variant_b = config.variants
         tests = {}
@@ -243,11 +243,13 @@ class ABTester:
             if metric not in df.columns:
                 continue
 
-            data_a = df[df['variant'] == variant_a][metric]
-            data_b = df[df['variant'] == variant_b][metric]
+            data_a = df[df["variant"] == variant_a][metric]
+            data_b = df[df["variant"] == variant_b][metric]
 
             if len(data_a) < 10 or len(data_b) < 10:
-                tests[metric] = {"error": "Insufficient sample size for significance test"}
+                tests[metric] = {
+                    "error": "Insufficient sample size for significance test"
+                }
                 continue
 
             # Simple t-test (in practice, you'd use scipy.stats)
@@ -260,14 +262,14 @@ class ABTester:
                     "t_statistic": float(t_stat),
                     "p_value": float(p_value),
                     "significant": p_value < 0.05,
-                    "effect_size": abs(data_a.mean() - data_b.mean()) / data_a.std()
+                    "effect_size": abs(data_a.mean() - data_b.mean()) / data_a.std(),
                 }
             except ImportError:
                 # Fallback without scipy
                 mean_diff = abs(data_a.mean() - data_b.mean())
                 tests[metric] = {
                     "mean_difference": float(mean_diff),
-                    "note": "Install scipy for proper significance testing"
+                    "note": "Install scipy for proper significance testing",
                 }
 
         return tests
@@ -276,16 +278,19 @@ class ABTester:
         """Save results to disk."""
         results_file = self.results_dir / "experiment_results.jsonl"
 
-        with open(results_file, 'a') as f:
+        with open(results_file, "a") as f:
             for result in self.results[-100:]:  # Save last 100 results
-                json.dump({
-                    "experiment_name": result.experiment_name,
-                    "variant": result.variant,
-                    "metrics": result.metrics,
-                    "sample_size": result.sample_size,
-                    "timestamp": result.timestamp
-                }, f)
-                f.write('\n')
+                json.dump(
+                    {
+                        "experiment_name": result.experiment_name,
+                        "variant": result.variant,
+                        "metrics": result.metrics,
+                        "sample_size": result.sample_size,
+                        "timestamp": result.timestamp,
+                    },
+                    f,
+                )
+                f.write("\n")
 
     def load_results(self) -> None:
         """Load results from disk."""
@@ -295,7 +300,7 @@ class ABTester:
             return
 
         self.results = []
-        with open(results_file, 'r') as f:
+        with open(results_file, "r") as f:
             for line in f:
                 data = json.loads(line.strip())
                 result = ExperimentResult(**data)
@@ -318,10 +323,7 @@ class ModelComparator:
         self.models = models
         self.test_data = test_data
 
-    def compare_models(
-        self,
-        metrics: List[str] = None
-    ) -> Dict[str, Dict[str, float]]:
+    def compare_models(self, metrics: List[str] = None) -> Dict[str, Dict[str, float]]:
         """
         Compare models on test data.
 
@@ -347,7 +349,7 @@ class ModelComparator:
                 results[model_name] = {
                     "mean_confidence": float(np.max(predictions, axis=1).mean()),
                     "prediction_std": float(np.max(predictions, axis=1).std()),
-                    "inference_time": 0.0  # Would need to measure
+                    "inference_time": 0.0,  # Would need to measure
                 }
 
             except Exception as e:

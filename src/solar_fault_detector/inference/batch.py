@@ -27,7 +27,7 @@ class BatchInferenceEngine:
         config: ModelConfig,
         use_cache: bool = True,
         cache_backend: Optional[str] = None,
-        batch_size: int = 32
+        batch_size: int = 32,
     ):
         """
         Initialize batch inference engine.
@@ -48,9 +48,11 @@ class BatchInferenceEngine:
         if use_cache:
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
+
                 cache = RedisCache()
             else:
                 from solar_fault_detector.utils.cache import InMemoryCache
+
                 cache = InMemoryCache()
 
             self.prediction_cache = PredictionCache(cache)
@@ -86,7 +88,7 @@ class BatchInferenceEngine:
 
         # Process in optimized batches
         for i in range(0, len(image_paths), self.batch_size):
-            batch_paths = image_paths[i:i + self.batch_size]
+            batch_paths = image_paths[i : i + self.batch_size]
             batch_results = self._predict_batch(batch_paths)
             results.extend(batch_results)
 
@@ -121,7 +123,9 @@ class BatchInferenceEngine:
                 batch = self.preprocessor.preprocess_batch(uncached_paths)
                 predictions = self.model.predict(batch, verbose=0)
 
-                for path, probs, orig_idx in zip(uncached_paths, predictions, uncached_indices):
+                for path, probs, orig_idx in zip(
+                    uncached_paths, predictions, uncached_indices
+                ):
                     result = {
                         "image": path.name,
                         "predicted_class": int(np.argmax(probs)),
@@ -163,10 +167,7 @@ class BatchInferenceEngine:
         return results
 
     def predict_directory(
-        self,
-        image_dir: Path,
-        recursive: bool = False,
-        file_pattern: str = "*.jpg"
+        self, image_dir: Path, recursive: bool = False, file_pattern: str = "*.jpg"
     ) -> List[Dict]:
         """
         Run inference on all images in a directory.
@@ -182,10 +183,9 @@ class BatchInferenceEngine:
             image_paths = list(image_dir.glob(file_pattern))
 
         # Filter for supported formats
-        supported_extensions = {'.jpg', '.jpeg', '.png'}
+        supported_extensions = {".jpg", ".jpeg", ".png"}
         image_paths = [
-            p for p in image_paths
-            if p.suffix.lower() in supported_extensions
+            p for p in image_paths if p.suffix.lower() in supported_extensions
         ]
 
         if not image_paths:
@@ -193,7 +193,9 @@ class BatchInferenceEngine:
 
         return self.predict_images(image_paths)
 
-    def benchmark_batch_size(self, test_image_path: Path, batch_sizes: List[int]) -> Dict:
+    def benchmark_batch_size(
+        self, test_image_path: Path, batch_sizes: List[int]
+    ) -> Dict:
         """
         Benchmark different batch sizes for optimal performance.
 
@@ -229,7 +231,7 @@ class BatchInferenceEngine:
             results[batch_size] = {
                 "batch_time": batch_time,
                 "per_image_time": per_image_time,
-                "throughput": batch_size / batch_time
+                "throughput": batch_size / batch_time,
             }
 
         return results

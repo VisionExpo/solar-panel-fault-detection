@@ -12,12 +12,14 @@ import numpy as np
 try:
     import lime
     import lime.lime_image
+
     LIME_AVAILABLE = True
 except ImportError:
     LIME_AVAILABLE = False
 
 try:
     import shap
+
     SHAP_AVAILABLE = True
 except ImportError:
     SHAP_AVAILABLE = False
@@ -70,7 +72,7 @@ class ModelExplainer:
         image: np.ndarray,
         prediction_class: int = None,
         num_samples: int = 1000,
-        num_features: int = 10
+        num_features: int = 10,
     ) -> Dict[str, Any]:
         """
         Explain prediction using LIME (Local Interpretable Model-agnostic Explanations).
@@ -85,11 +87,7 @@ class ModelExplainer:
             Dictionary with explanation results
         """
         if not LIME_AVAILABLE or self.lime_explainer is None:
-            return {
-                "method": "lime",
-                "available": False,
-                "error": "LIME not available"
-            }
+            return {"method": "lime", "available": False, "error": "LIME not available"}
 
         try:
             # LIME expects images in different format
@@ -113,7 +111,7 @@ class ModelExplainer:
                 predict_fn,
                 top_labels=1,
                 hide_color=0,
-                num_samples=num_samples
+                num_samples=num_samples,
             )
 
             # Get the class to explain
@@ -125,7 +123,7 @@ class ModelExplainer:
                 prediction_class,
                 positive_only=True,
                 num_features=num_features,
-                hide_rest=True
+                hide_rest=True,
             )
 
             return {
@@ -135,22 +133,18 @@ class ModelExplainer:
                 "top_features": num_features,
                 "explanation_mask": mask.tolist(),
                 "explained_image": temp.tolist(),
-                "feature_importance": explanation.local_exp[prediction_class]
+                "feature_importance": explanation.local_exp[prediction_class],
             }
 
         except Exception as e:
             logger.error(f"LIME explanation failed: {e}")
-            return {
-                "method": "lime",
-                "available": False,
-                "error": str(e)
-            }
+            return {"method": "lime", "available": False, "error": str(e)}
 
     def explain_prediction_shap(
         self,
         image: np.ndarray,
         background_images: Optional[np.ndarray] = None,
-        max_evals: int = 100
+        max_evals: int = 100,
     ) -> Dict[str, Any]:
         """
         Explain prediction using SHAP (SHapley Additive exPlanations).
@@ -164,11 +158,7 @@ class ModelExplainer:
             Dictionary with SHAP explanation results
         """
         if not SHAP_AVAILABLE or self.shap_explainer is None:
-            return {
-                "method": "shap",
-                "available": False,
-                "error": "SHAP not available"
-            }
+            return {"method": "shap", "available": False, "error": "SHAP not available"}
 
         try:
             # For image models, SHAP can be expensive
@@ -179,32 +169,32 @@ class ModelExplainer:
                 background_images = np.tile(background_images, (10, 1, 1, 1))
 
             # Explain prediction
-            shap_values = self.shap_explainer(
-                background_images,
-                max_evals=max_evals
-            )
+            shap_values = self.shap_explainer(background_images, max_evals=max_evals)
 
             return {
                 "method": "shap",
                 "available": True,
-                "shap_values": shap_values.values.tolist() if hasattr(shap_values, 'values') else [],
-                "base_values": shap_values.base_values.tolist() if hasattr(shap_values, 'base_values') else [],
-                "data": shap_values.data.tolist() if hasattr(shap_values, 'data') else []
+                "shap_values": (
+                    shap_values.values.tolist()
+                    if hasattr(shap_values, "values")
+                    else []
+                ),
+                "base_values": (
+                    shap_values.base_values.tolist()
+                    if hasattr(shap_values, "base_values")
+                    else []
+                ),
+                "data": (
+                    shap_values.data.tolist() if hasattr(shap_values, "data") else []
+                ),
             }
 
         except Exception as e:
             logger.error(f"SHAP explanation failed: {e}")
-            return {
-                "method": "shap",
-                "available": False,
-                "error": str(e)
-            }
+            return {"method": "shap", "available": False, "error": str(e)}
 
     def get_feature_importance(
-        self,
-        test_images: np.ndarray,
-        method: str = "lime",
-        sample_size: int = 100
+        self, test_images: np.ndarray, method: str = "lime", sample_size: int = 100
     ) -> Dict[str, Any]:
         """
         Get global feature importance across multiple images.
@@ -238,7 +228,7 @@ class ModelExplainer:
             return {
                 "method": method,
                 "global_importance": {},
-                "error": "No successful explanations"
+                "error": "No successful explanations",
             }
 
         # Aggregate explanations (simplified)
@@ -247,13 +237,11 @@ class ModelExplainer:
             "method": method,
             "sample_size": len(explanations),
             "global_importance": "Feature importance analysis completed",
-            "explanations_count": len(explanations)
+            "explanations_count": len(explanations),
         }
 
     def generate_explanation_report(
-        self,
-        image: np.ndarray,
-        prediction_result: Dict
+        self, image: np.ndarray, prediction_result: Dict
     ) -> Dict[str, Any]:
         """
         Generate comprehensive explanation report for a prediction.
@@ -265,10 +253,7 @@ class ModelExplainer:
         Returns:
             Complete explanation report
         """
-        report = {
-            "prediction": prediction_result,
-            "explanations": {}
-        }
+        report = {"prediction": prediction_result, "explanations": {}}
 
         # LIME explanation
         lime_exp = self.explain_prediction_lime(image)
@@ -283,9 +268,10 @@ class ModelExplainer:
             "explained_class": prediction_result.get("predicted_class"),
             "confidence": prediction_result.get("confidence"),
             "explanation_methods": [
-                method for method in ["lime", "shap"]
+                method
+                for method in ["lime", "shap"]
                 if report["explanations"][method].get("available", False)
-            ]
+            ],
         }
 
         return report
