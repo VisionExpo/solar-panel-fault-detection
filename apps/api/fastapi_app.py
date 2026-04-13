@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
+import gc
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -90,8 +91,13 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Internal error during prediction: {e}")
+        raise HTTPException(
+            status_code=500,
+            detail="An internal server error occurred while processing the request."
+        )
 
     finally:
         if temp_path.exists():
             temp_path.unlink()
+        gc.collect()
