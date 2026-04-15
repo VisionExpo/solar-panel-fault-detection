@@ -42,7 +42,9 @@ class WandbTracker:
             },
         )
 
-    def log_metrics(self, metrics: Dict[str, float], step: Optional[int] = None) -> None:
+    def log_metrics(
+        self, metrics: Dict[str, float], step: Optional[int] = None
+    ) -> None:
         """
         Log scalar metrics.
         """

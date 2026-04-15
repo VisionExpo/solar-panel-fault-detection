@@ -31,7 +31,7 @@ class SolarFaultDetectionClient:
         base_url: str = "http://localhost:5000",
         api_key: Optional[str] = None,
         timeout: int = 30,
-        retries: int = 3
+        retries: int = 3,
     ):
         """
         Initialize the API client.
@@ -42,29 +42,26 @@ class SolarFaultDetectionClient:
             timeout: Request timeout in seconds
             retries: Number of retries for failed requests
         """
-        self.base_url = base_url.rstrip('/')
+        self.base_url = base_url.rstrip("/")
         self.api_key = api_key
         self.timeout = timeout
         self.retries = retries
         self.session = requests.Session()
 
         # Set default headers
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-            'User-Agent': 'SolarFaultDetection-SDK/1.0'
-        })
+        self.session.headers.update(
+            {
+                "Content-Type": "application/json",
+                "User-Agent": "SolarFaultDetection-SDK/1.0",
+            }
+        )
 
         if api_key:
-            self.session.headers.update({'Authorization': f'Bearer {api_key}'})
+            self.session.headers.update({"Authorization": f"Bearer {api_key}"})
 
         logger.info(f"Initialized client for {base_url}")
 
-    def _make_request(
-        self,
-        method: str,
-        endpoint: str,
-        **kwargs
-    ) -> requests.Response:
+    def _make_request(self, method: str, endpoint: str, **kwargs) -> requests.Response:
         """
         Make HTTP request with retry logic.
 
@@ -84,10 +81,7 @@ class SolarFaultDetectionClient:
         for attempt in range(self.retries):
             try:
                 response = self.session.request(
-                    method,
-                    url,
-                    timeout=self.timeout,
-                    **kwargs
+                    method, url, timeout=self.timeout, **kwargs
                 )
                 response.raise_for_status()
                 return response
@@ -96,7 +90,7 @@ class SolarFaultDetectionClient:
                     logger.error(f"Request failed after {self.retries} attempts: {e}")
                     raise
                 logger.warning(f"Request attempt {attempt + 1} failed: {e}")
-                time.sleep(2 ** attempt)  # Exponential backoff
+                time.sleep(2**attempt)  # Exponential backoff
 
     def health_check(self) -> Dict[str, Any]:
         """
@@ -105,13 +99,11 @@ class SolarFaultDetectionClient:
         Returns:
             Health status dictionary
         """
-        response = self._make_request('GET', '/health')
+        response = self._make_request("GET", "/health")
         return response.json()
 
     def predict(
-        self,
-        image_path: Union[str, Path],
-        return_probabilities: bool = True
+        self, image_path: Union[str, Path], return_probabilities: bool = True
     ) -> Dict[str, Any]:
         """
         Make prediction on a single image.
@@ -127,21 +119,19 @@ class SolarFaultDetectionClient:
         if not image_path.exists():
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        with open(image_path, 'rb') as f:
-            files = {'file': (image_path.name, f, 'image/jpeg')}
-            response = self._make_request('POST', '/predict', files=files)
+        with open(image_path, "rb") as f:
+            files = {"file": (image_path.name, f, "image/jpeg")}
+            response = self._make_request("POST", "/predict", files=files)
 
         result = response.json()
 
-        if not return_probabilities and 'probabilities' in result:
-            del result['probabilities']
+        if not return_probabilities and "probabilities" in result:
+            del result["probabilities"]
 
         return result
 
     def predict_batch(
-        self,
-        image_paths: List[Union[str, Path]],
-        batch_size: int = 10
+        self, image_paths: List[Union[str, Path]], batch_size: int = 10
     ) -> List[Dict[str, Any]]:
         """
         Make predictions on multiple images.
@@ -156,7 +146,7 @@ class SolarFaultDetectionClient:
         results = []
 
         for i in range(0, len(image_paths), batch_size):
-            batch_paths = image_paths[i:i + batch_size]
+            batch_paths = image_paths[i : i + batch_size]
 
             # For now, process individually (API might support batch in future)
             for path in batch_paths:
@@ -165,17 +155,12 @@ class SolarFaultDetectionClient:
                     results.append(result)
                 except Exception as e:
                     logger.error(f"Failed to predict {path}: {e}")
-                    results.append({
-                        'image': str(path),
-                        'error': str(e)
-                    })
+                    results.append({"image": str(path), "error": str(e)})
 
         return results
 
     def predict_url(
-        self,
-        image_url: str,
-        return_probabilities: bool = True
+        self, image_url: str, return_probabilities: bool = True
     ) -> Dict[str, Any]:
         """
         Make prediction on an image from URL.
@@ -187,12 +172,9 @@ class SolarFaultDetectionClient:
         Returns:
             Prediction results dictionary
         """
-        data = {
-            'url': image_url,
-            'return_probabilities': return_probabilities
-        }
+        data = {"url": image_url, "return_probabilities": return_probabilities}
 
-        response = self._make_request('POST', '/predict-url', json=data)
+        response = self._make_request("POST", "/predict-url", json=data)
         return response.json()
 
     def get_model_info(self) -> Dict[str, Any]:
@@ -202,7 +184,7 @@ class SolarFaultDetectionClient:
         Returns:
             Model information dictionary
         """
-        response = self._make_request('GET', '/model-info')
+        response = self._make_request("GET", "/model-info")
         return response.json()
 
     def get_metrics(self) -> Dict[str, Any]:
@@ -212,7 +194,7 @@ class SolarFaultDetectionClient:
         Returns:
             Metrics dictionary
         """
-        response = self._make_request('GET', '/metrics')
+        response = self._make_request("GET", "/metrics")
         return response.json()
 
 
@@ -230,17 +212,15 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
         if self._async_session is None:
             try:
                 import aiohttp
+
                 self._async_session = aiohttp.ClientSession(
                     headers=self.session.headers.copy(),
-                    timeout=aiohttp.ClientTimeout(total=self.timeout)
+                    timeout=aiohttp.ClientTimeout(total=self.timeout),
                 )
             except ImportError:
                 raise ImportError("aiohttp required for async client")
 
-    async def predict_async(
-        self,
-        image_path: Union[str, Path]
-    ) -> Dict[str, Any]:
+    async def predict_async(self, image_path: Union[str, Path]) -> Dict[str, Any]:
         """
         Make prediction asynchronously.
 
@@ -256,13 +236,12 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
         if not image_path.exists():
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        with open(image_path, 'rb') as f:
+        with open(image_path, "rb") as f:
             data = aiohttp.FormData()
-            data.add_field('file', f, filename=image_path.name)
+            data.add_field("file", f, filename=image_path.name)
 
             async with self._async_session.post(
-                f"{self.base_url}/predict",
-                data=data
+                f"{self.base_url}/predict", data=data
             ) as response:
                 response.raise_for_status()
                 return await response.json()
@@ -276,8 +255,7 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
 
 # Convenience functions
 def create_client(
-    base_url: str = "http://localhost:5000",
-    **kwargs
+    base_url: str = "http://localhost:5000", **kwargs
 ) -> SolarFaultDetectionClient:
     """
     Create a new API client instance.
@@ -293,8 +271,7 @@ def create_client(
 
 
 def quick_predict(
-    image_path: Union[str, Path],
-    base_url: str = "http://localhost:5000"
+    image_path: Union[str, Path], base_url: str = "http://localhost:5000"
 ) -> Dict[str, Any]:
     """
     Quick prediction without creating a persistent client.

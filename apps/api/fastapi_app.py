@@ -35,7 +35,7 @@ UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
 try:
     MODEL_PATH = ensure_model_exists(config.model.best_model_path)
     logger.info(f"Loading model from: {MODEL_PATH}")
-    
+
     predictor = Predictor(
         model_path=MODEL_PATH,
         config=config.model,
@@ -71,7 +71,7 @@ async def predict_image(file: UploadFile = File(...)):
             status_code=503,
             detail="Model not loaded. Service unavailable. Check server logs.",
         )
-    
+
     if file.content_type not in ALLOWED_MIME_TYPES:
         raise HTTPException(
             status_code=400,
@@ -91,7 +91,9 @@ async def predict_image(file: UploadFile = File(...)):
 
     except Exception as e:
         logger.error(f"Prediction error: {e}")
-        raise HTTPException(status_code=500, detail="An internal error occurred during prediction.")
+        raise HTTPException(
+            status_code=500, detail="An internal error occurred during prediction."
+        )
 
     finally:
         if temp_path.exists():

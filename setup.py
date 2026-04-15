@@ -6,7 +6,7 @@ BASE_DIR = Path(__file__).parent
 
 # Determine which requirements file to use
 # Use production requirements in Docker/production environments
-requirements_file = os.getenv('REQUIREMENTS_FILE', 'requirements.txt')
+requirements_file = os.getenv("REQUIREMENTS_FILE", "requirements.txt")
 
 # Fallback to requirements-prod.txt if requirements.txt doesn't exist
 req_path = BASE_DIR / requirements_file

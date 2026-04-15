@@ -41,7 +41,7 @@ class ModelOptimizer:
         self,
         model: tf.keras.Model,
         quantization_type: str = "dynamic",
-        representative_dataset: Optional[tf.data.Dataset] = None
+        representative_dataset: Optional[tf.data.Dataset] = None,
     ) -> tf.keras.Model:
         """
         Apply quantization to reduce model size and improve inference speed.
@@ -61,7 +61,9 @@ class ModelOptimizer:
             return self._apply_dynamic_quantization(model)
         elif quantization_type == "int8":
             if representative_dataset is None:
-                raise ValueError("representative_dataset required for int8 quantization")
+                raise ValueError(
+                    "representative_dataset required for int8 quantization"
+                )
             return self._apply_int8_quantization(model, representative_dataset)
         elif quantization_type == "float16":
             return self._apply_float16_quantization(model)
@@ -90,9 +92,7 @@ class ModelOptimizer:
         return model  # Return original model for now
 
     def _apply_int8_quantization(
-        self,
-        model: tf.keras.Model,
-        representative_dataset: tf.data.Dataset
+        self, model: tf.keras.Model, representative_dataset: tf.data.Dataset
     ) -> tf.keras.Model:
         """
         Apply full int8 quantization.
@@ -136,9 +136,7 @@ class ModelOptimizer:
         return model  # Return original model for compatibility
 
     def optimize_for_inference(
-        self,
-        model: tf.keras.Model,
-        batch_size: Optional[int] = None
+        self, model: tf.keras.Model, batch_size: Optional[int] = None
     ) -> tf.keras.Model:
         """
         Apply inference optimizations.
@@ -157,13 +155,13 @@ class ModelOptimizer:
             # Set fixed batch size for better optimization
             inputs = tf.keras.Input(
                 shape=(batch_size, *self.config.img_size, self.config.num_channels),
-                dtype=tf.float32
+                dtype=tf.float32,
             )
             # This is a simplified approach - in practice you'd rebuild the model
             pass
 
         # Enable mixed precision if available
-        policy = tf.keras.mixed_precision.Policy('mixed_float16')
+        policy = tf.keras.mixed_precision.Policy("mixed_float16")
         tf.keras.mixed_precision.set_global_policy(policy)
 
         logger.info("Inference optimizations applied")
@@ -173,7 +171,7 @@ class ModelOptimizer:
         self,
         model: tf.keras.Model,
         save_path: Union[str, Path],
-        save_format: str = "keras"
+        save_format: str = "keras",
     ) -> None:
         """
         Save optimized model in specified format.
@@ -186,23 +184,20 @@ class ModelOptimizer:
         save_path = Path(save_path)
 
         if save_format == "keras":
-            model.save(save_path.with_suffix('.h5'))
+            model.save(save_path.with_suffix(".h5"))
         elif save_format == "saved_model":
             tf.saved_model.save(model, str(save_path))
         elif save_format == "tflite":
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
             tflite_model = converter.convert()
-            save_path.with_suffix('.tflite').write_bytes(tflite_model)
+            save_path.with_suffix(".tflite").write_bytes(tflite_model)
         else:
             raise ValueError(f"Unsupported save format: {save_format}")
 
         logger.info(f"Model saved in {save_format} format to {save_path}")
 
     def benchmark_inference_speed(
-        self,
-        model: tf.keras.Model,
-        test_data: np.ndarray,
-        num_runs: int = 100
+        self, model: tf.keras.Model, test_data: np.ndarray, num_runs: int = 100
     ) -> dict:
         """
         Benchmark model inference speed.
@@ -235,7 +230,7 @@ class ModelOptimizer:
             "std_time": float(np.std(times)),
             "min_time": float(np.min(times)),
             "max_time": float(np.max(times)),
-            "throughput": len(test_data) / np.mean(times)
+            "throughput": len(test_data) / np.mean(times),
         }
 
         logger.info(f"Benchmark results: {stats}")

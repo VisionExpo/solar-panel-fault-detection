@@ -31,14 +31,10 @@ class BaseModel(ABC):
         if self.model is None:
             raise ValueError("Model must be built before compilation.")
 
-        optimizer = tf.keras.optimizers.Adam(
-            learning_rate=self.config.learning_rate
-        )
+        optimizer = tf.keras.optimizers.Adam(learning_rate=self.config.learning_rate)
 
         self.model.compile(
-            optimizer=optimizer,
-            loss="categorical_crossentropy",
-            metrics=["accuracy"]
+            optimizer=optimizer, loss="categorical_crossentropy", metrics=["accuracy"]
         )
 
     def train(self, train_data, val_data, callbacks=None) -> Any:
@@ -52,7 +48,7 @@ class BaseModel(ABC):
             train_data,
             validation_data=val_data,
             epochs=self.config.epochs,
-            callbacks=callbacks
+            callbacks=callbacks,
         )
 
     def save(self, path: Path) -> None:
