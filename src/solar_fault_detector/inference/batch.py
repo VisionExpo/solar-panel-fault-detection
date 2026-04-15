@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 import numpy as np
 import tensorflow as tf
@@ -45,21 +45,21 @@ class BatchInferenceEngine:
 
         # Initialize caches
         self.use_cache = use_cache
+        self.prediction_cache: Optional[PredictionCache] = None
+        self.model_cache: Optional[ModelCache] = None
+
         if use_cache:
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
 
-                cache = RedisCache()
+                cache_obj: Any = RedisCache()
             else:
                 from solar_fault_detector.utils.cache import InMemoryCache
 
-                cache = InMemoryCache()
+                cache_obj = InMemoryCache()
 
-            self.prediction_cache = PredictionCache(cache)
-            self.model_cache = ModelCache(cache)
-        else:
-            self.prediction_cache = None
-            self.model_cache = None
+            self.prediction_cache = PredictionCache(cache_obj)
+            self.model_cache = ModelCache(cache_obj)
 
         # Load model with caching
         self.model = self._load_model(model_path)
@@ -96,10 +96,10 @@ class BatchInferenceEngine:
 
     def _predict_batch(self, image_paths: List[Path]) -> List[Dict]:
         """Predict on a single batch with caching."""
-        results = []
+        results: List[Any] = []
         # Check cache first
         if self.prediction_cache:
-            cached_results = []
+            cached_results: List[Any] = []
             uncached_paths = []
             uncached_indices = []
 
@@ -159,17 +159,23 @@ class BatchInferenceEngine:
                 results.append((None, result))
 
         # Sort by original order if needed
-        if results and results[0][0] is not None:
-            results.sort(key=lambda x: x[0])
-            results = [r for _, r in results]
+        if (
+            results
+            and getattr(results[0], "__class__", None) is tuple
+            and results[0][0] is not None
+        ):  # type: ignore
+            results.sort(key=lambda x: x[0])  # type: ignore
+            results = [r for _, r in results]  # type: ignore
         else:
-            results = [r for _, r in results]
+            # We already have dicts, or tuple mapping logic
+            if results and getattr(results[0], "__class__", None) is tuple:
+                results = [r for _, r in results]  # type: ignore
 
         return results
 
     def predict_directory(
         self, image_dir: Path, recursive: bool = False, file_pattern: str = "*.jpg"
-    ) -> List[Dict]:
+    ) -> List[Any]:
         """
         Run inference on all images in a directory.
 

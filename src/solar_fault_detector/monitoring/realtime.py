@@ -91,7 +91,7 @@ class RealTimeMonitor:
         self.alert_callbacks.append(callback)
 
     def record_metric(
-        self, metric_name: str, value: float, labels: Dict = None
+        self, metric_name: str, value: float, labels: Optional[Dict] = None
     ) -> None:
         """
         Record a metric value.
@@ -155,7 +155,7 @@ class RealTimeMonitor:
 
     def _evaluate_condition(
         self, value: float, condition: str, threshold: float
-    ) -> bool:
+    ) -> bool:  # type: ignore
         """Evaluate alert condition."""
         if condition == ">":
             return value > threshold
@@ -173,7 +173,9 @@ class RealTimeMonitor:
             logger.warning(f"Unknown condition: {condition}")
             return False
 
-    def _check_duration_rule(self, rule: AlertRule, current_value: float) -> bool:
+    def _check_duration_rule(
+        self, rule: AlertRule, current_value: float
+    ) -> bool:  # type: ignore
         """Check if alert condition has been met for the required duration."""
         if rule.duration_minutes == 0:
             return True
@@ -350,4 +352,4 @@ class AnomalyDetector:
         latest_value = values[-1]
         z_score = abs(latest_value - mean) / std
 
-        return z_score > self.threshold_sigma
+        return bool(z_score > self.threshold_sigma)

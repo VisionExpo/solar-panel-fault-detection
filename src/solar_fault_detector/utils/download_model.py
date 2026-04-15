@@ -39,12 +39,11 @@ def download_model_from_huggingface(
         repo_id=repo_id,
         filename=model_filename,
         cache_dir=str(cache_dir),
-        force_filename=model_filename,
-    )
+    )  # type: ignore
 
-    model_path = Path(model_path)
-    print(f"Model downloaded successfully to: {model_path}")
-    return model_path
+    result_path = Path(model_path)
+    print(f"Model downloaded successfully to: {result_path}")
+    return result_path
 
 
 def ensure_model_exists(

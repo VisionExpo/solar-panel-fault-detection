@@ -10,14 +10,19 @@ import time
 from typing import Dict, Any
 
 try:
-    from prometheus_client import Counter, Histogram, Gauge, start_http_server
+    from prometheus_client import (  # type: ignore
+        Counter,
+        Histogram,
+        Gauge,
+        start_http_server,
+    )
 
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     # Create dummy classes for when prometheus is not available
-    class Counter:
+    class Counter:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             pass
 
@@ -27,7 +32,7 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Histogram:
+    class Histogram:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             pass
 
@@ -37,7 +42,7 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Gauge:
+    class Gauge:  # type: ignore[no-redef]
         def __init__(self, *args, **kwargs):
             pass
 
@@ -227,7 +232,10 @@ class HealthChecker:
             model_status = "unknown"
             model_details = "Model predictor not initialized"
 
-        health["checks"]["model"] = {"status": model_status, "details": model_details}
+        health["checks"]["model"] = {  # type: ignore
+            "status": model_status,
+            "details": model_details,
+        }
 
         # System resources
         try:
@@ -246,7 +254,7 @@ class HealthChecker:
             system_status = "unknown"
             system_details = "System monitoring not available"
 
-        health["checks"]["system"] = {
+        health["checks"]["system"] = {  # type: ignore
             "status": system_status,
             "details": system_details,
         }

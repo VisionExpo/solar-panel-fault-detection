@@ -217,20 +217,20 @@ class ModelOptimizer:
         # Warm up
         _ = model.predict(test_data[:1], verbose=0)
 
-        times = []
+        times: list[float] = []
         for _ in range(num_runs):
             start_time = time.time()
             _ = model.predict(test_data, verbose=0)
             end_time = time.time()
             times.append(end_time - start_time)
 
-        times = np.array(times)
+        times_np = np.array(times)
         stats = {
-            "mean_time": float(np.mean(times)),
-            "std_time": float(np.std(times)),
-            "min_time": float(np.min(times)),
-            "max_time": float(np.max(times)),
-            "throughput": len(test_data) / np.mean(times),
+            "mean_time": float(np.mean(times_np)),
+            "std_time": float(np.std(times_np)),
+            "min_time": float(np.min(times_np)),
+            "max_time": float(np.max(times_np)),
+            "throughput": float(len(test_data) / np.mean(times_np)),
         }
 
         logger.info(f"Benchmark results: {stats}")
