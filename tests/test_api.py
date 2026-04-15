@@ -1,6 +1,5 @@
 from fastapi.testclient import TestClient
 from unittest.mock import patch
-from pathlib import Path
 import io
 
 from apps.api.fastapi_app import app
