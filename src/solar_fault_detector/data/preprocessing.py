@@ -17,4 +17,5 @@ class ImagePreprocessor:
         return tf.convert_to_tensor(image_array, dtype=tf.float32)
 
     def preprocess_batch(self, image_paths: list[Path]) -> tf.Tensor:
-        return tf.convert_to_tensor(np.array([self.load_and_preprocess(p).numpy() for p in image_paths]))
+        arrays = [self.load_and_preprocess(p).numpy() for p in image_paths]
+        return tf.convert_to_tensor(np.array(arrays))

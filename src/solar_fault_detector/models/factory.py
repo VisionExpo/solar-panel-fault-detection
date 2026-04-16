@@ -13,9 +13,7 @@ class ModelFactory:
 
     @staticmethod
     def create(
-        model_type: Literal["cnn", "ensemble"],
-        config: ModelConfig,
-        **kwargs
+        model_type: Literal["cnn", "ensemble"], config: ModelConfig, **kwargs
     ) -> BaseModel:
         """
         Create and return a model instance based on model_type.

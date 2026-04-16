@@ -1,4 +1,3 @@
-import shutil
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
@@ -22,7 +21,24 @@ def _create_dummy_dataset(root: Path):
 
 
 def test_data_ingestion_creates_splits(tmp_path):
-    pass
+    source_dir = tmp_path / "dataset"
+    _create_dummy_dataset(source_dir)
+
+    config = DataConfig(
+        root_dir=tmp_path / "artifacts",
+        data_dir=source_dir,
+        train_ratio=0.6,
+        val_ratio=0.2,
+        test_ratio=0.2,
+        random_state=42,
+    )
+
+    ingestor = DataIngestor(config)
+    splits = ingestor.ingest()
+
+    assert splits["train"].exists()
+    assert splits["val"].exists()
+    assert splits["test"].exists()
 
 
 def test_image_preprocessing(tmp_path):

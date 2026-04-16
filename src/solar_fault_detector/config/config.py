@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 from pathlib import Path
 
+
 # ======================
 # Data Configuration
 # ======================
@@ -40,7 +41,7 @@ class TrainingConfig:
     wandb_project: str = "solar_panel_fault_detection"
     wandb_entity: str = "gorulevishal984"
     wandb_run_group: str = "baseline"
-    wandb_mode: str = "online"   # online | offline | disabled
+    wandb_mode: str = "online"  # online | offline | disabled
     log_images: bool = True
     log_confusion_matrix: bool = True
 

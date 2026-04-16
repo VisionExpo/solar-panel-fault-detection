@@ -1,3 +1,5 @@
+import numpy as np
+
 """
 Real-time monitoring and alerting system.
 
@@ -11,7 +13,6 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import threading
 import time
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -19,6 +20,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class AlertRule:
     """Alert rule configuration."""
+
     name: str
     metric: str
     condition: str  # e.g., ">", "<", "==", "!="
@@ -30,6 +32,7 @@ class AlertRule:
 @dataclass
 class Alert:
     """Alert instance."""
+
     rule_name: str
     message: str
     severity: str  # "low", "medium", "high", "critical"
@@ -88,7 +91,9 @@ class RealTimeMonitor:
         """
         self.alert_callbacks.append(callback)
 
-    def record_metric(self, metric_name: str, value: float, labels: Dict = None) -> None:
+    def record_metric(
+        self, metric_name: str, value: float, labels: Dict = None
+    ) -> None:
         """
         Record a metric value.
 
@@ -102,11 +107,9 @@ class RealTimeMonitor:
         if metric_name not in self.metric_history:
             self.metric_history[metric_name] = []
 
-        self.metric_history[metric_name].append({
-            "value": value,
-            "timestamp": timestamp,
-            "labels": labels or {}
-        })
+        self.metric_history[metric_name].append(
+            {"value": value, "timestamp": timestamp, "labels": labels or {}}
+        )
 
         # Keep only last 1000 values per metric
         if len(self.metric_history[metric_name]) > 1000:
@@ -118,9 +121,13 @@ class RealTimeMonitor:
         # Update Prometheus metrics if available
         if self.metrics_collector:
             if metric_name == "prediction_latency":
-                self.metrics_collector.prediction_duration.labels(model_type="realtime").observe(value)
+                self.metrics_collector.prediction_duration.labels(
+                    model_type="realtime"
+                ).observe(value)
             elif metric_name == "prediction_confidence":
-                self.metrics_collector.prediction_confidence.labels(model_type="realtime").observe(value)
+                self.metrics_collector.prediction_confidence.labels(
+                    model_type="realtime"
+                ).observe(value)
 
     def _check_alerts(self, metric_name: str, value: float) -> None:
         """Check if any alert rules are triggered."""
@@ -134,8 +141,7 @@ class RealTimeMonitor:
             if triggered:
                 # Check if alert is already active (cooldown)
                 active_alert = next(
-                    (a for a in self.active_alerts if a.rule_name == rule.name),
-                    None
+                    (a for a in self.active_alerts if a.rule_name == rule.name), None
                 )
 
                 if active_alert:
@@ -148,7 +154,9 @@ class RealTimeMonitor:
                 if self._check_duration_rule(rule, value):
                     self._trigger_alert(rule, value)
 
-    def _evaluate_condition(self, value: float, condition: str, threshold: float) -> bool:
+    def _evaluate_condition(
+        self, value: float, condition: str, threshold: float
+    ) -> bool:
         """Evaluate alert condition."""
         if condition == ">":
             return value > threshold
@@ -178,8 +186,7 @@ class RealTimeMonitor:
         # Check recent values within duration window
         cutoff_time = datetime.now() - timedelta(minutes=rule.duration_minutes)
         recent_values = [
-            entry["value"] for entry in metric_data
-            if entry["timestamp"] > cutoff_time
+            entry["value"] for entry in metric_data if entry["timestamp"] > cutoff_time
         ]
 
         # All recent values must meet the condition
@@ -198,7 +205,7 @@ class RealTimeMonitor:
             severity=severity,
             timestamp=datetime.now(),
             value=value,
-            threshold=rule.threshold
+            threshold=rule.threshold,
         )
 
         self.active_alerts.append(alert)
@@ -237,9 +244,7 @@ class RealTimeMonitor:
 
         self.is_monitoring = True
         self.monitor_thread = threading.Thread(
-            target=self._monitoring_loop,
-            args=(interval_seconds,),
-            daemon=True
+            target=self._monitoring_loop, args=(interval_seconds,), daemon=True
         )
         self.monitor_thread.start()
         logger.info("Real-time monitoring started")
@@ -288,7 +293,9 @@ class RealTimeMonitor:
             "active_alerts": len(self.active_alerts),
             "alert_rules": len(self.alert_rules),
             "monitored_metrics": list(self.metric_history.keys()),
-            "total_metric_points": sum(len(history) for history in self.metric_history.values())
+            "total_metric_points": sum(
+                len(history) for history in self.metric_history.values()
+            ),
         }
 
     def get_recent_alerts(self, hours: int = 24) -> List[Alert]:
@@ -302,10 +309,7 @@ class RealTimeMonitor:
             List of recent alerts
         """
         cutoff_time = datetime.now() - timedelta(hours=hours)
-        return [
-            alert for alert in self.active_alerts
-            if alert.timestamp > cutoff_time
-        ]
+        return [alert for alert in self.active_alerts if alert.timestamp > cutoff_time]
 
 
 class AnomalyDetector:

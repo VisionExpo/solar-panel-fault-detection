@@ -41,9 +41,7 @@ class CNNModel(BaseModel):
         x = layers.Dense(256, activation="relu")(x)
         x = layers.Dropout(0.5)(x)
 
-        outputs = layers.Dense(
-            self.config.num_classes, activation="softmax"
-        )(x)
+        outputs = layers.Dense(self.config.num_classes, activation="softmax")(x)
 
         self.model = models.Model(inputs=inputs, outputs=outputs)
         return self.model
