@@ -1,4 +1,5 @@
-import shutil
+with open("tests/test_data.py", "w") as f:
+    f.write("""import shutil
 from pathlib import Path
 import numpy as np
 import tensorflow as tf
@@ -39,3 +40,4 @@ def test_image_preprocessing(tmp_path):
 
     assert isinstance(tensor, (tf.Tensor, np.ndarray))
     assert tensor.shape == (64, 64, 3)
+""")

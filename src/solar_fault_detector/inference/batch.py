@@ -94,6 +94,7 @@ class BatchInferenceEngine:
 
     def _predict_batch(self, image_paths: List[Path]) -> List[Dict]:
         """Predict on a single batch with caching."""
+        results = []
         # Check cache first
         if self.prediction_cache:
             cached_results = []

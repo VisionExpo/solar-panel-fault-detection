@@ -20,6 +20,7 @@ def test_single_image_predictor(mock_load_model, tmp_path):
     # Mock model
     mock_model = MagicMock()
     mock_model.predict.return_value = np.array([[0.1, 0.7, 0.2]])
+    mock_model.return_value.numpy.return_value = np.array([[0.1, 0.7, 0.2]])
     mock_load_model.return_value = mock_model
 
     img_path = tmp_path / "test.jpg"
@@ -43,6 +44,12 @@ def test_single_image_predictor(mock_load_model, tmp_path):
 def test_batch_inference_engine(mock_load_model, tmp_path):
     mock_model = MagicMock()
     mock_model.predict.return_value = np.array(
+        [
+            [0.2, 0.5, 0.3],
+            [0.6, 0.2, 0.2],
+        ]
+    )
+    mock_model.return_value.numpy.return_value = np.array(
         [
             [0.2, 0.5, 0.3],
             [0.6, 0.2, 0.2],

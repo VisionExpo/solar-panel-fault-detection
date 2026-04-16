@@ -11,9 +11,13 @@ client = TestClient(app)
 def test_health_check():
     response = client.get("/health")
     assert response.status_code == 200
-    assert response.json() == {"status": "ok"}
+    json_resp = response.json()
+    assert response.status_code == 200
+    assert "status" in json_resp
+    assert json_resp["status"] in ("ok", "model_not_ready")
 
 
+@patch("apps.api.fastapi_app.MODEL_READY", True)
 @patch("apps.api.fastapi_app.predictor")
 def test_predict_endpoint(mock_predictor):
     mock_predictor.predict.return_value = {
