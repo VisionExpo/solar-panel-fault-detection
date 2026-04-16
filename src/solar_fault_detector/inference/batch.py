@@ -119,7 +119,7 @@ class BatchInferenceEngine:
             # Process uncached images
             if uncached_paths:
                 batch = self.preprocessor.preprocess_batch(uncached_paths)
-                predictions = self.model.predict(batch, verbose=0)
+                predictions = self.model(batch, training=False).numpy()
 
                 for path, probs, orig_idx in zip(uncached_paths, predictions, uncached_indices):
                     result = {
@@ -142,7 +142,7 @@ class BatchInferenceEngine:
         else:
             # No caching - process all at once
             batch = self.preprocessor.preprocess_batch(image_paths)
-            predictions = self.model.predict(batch, verbose=0)
+            predictions = self.model(batch, training=False).numpy()
 
             for path, probs in zip(image_paths, predictions):
                 result = {
@@ -216,11 +216,11 @@ class BatchInferenceEngine:
             batch = np.tile(test_image, (batch_size, 1, 1, 1))
 
             # Warm up
-            _ = self.model.predict(batch[:1], verbose=0)
+            _ = self.model(batch[:1], training=False).numpy()
 
             # Time batch prediction
             start_time = time.time()
-            _ = self.model.predict(batch, verbose=0)
+            _ = self.model(batch, training=False).numpy()
             end_time = time.time()
 
             batch_time = end_time - start_time
