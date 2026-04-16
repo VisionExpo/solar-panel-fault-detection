@@ -67,6 +67,6 @@ if uploaded_file:
 # ======================
 # Auto Refresh
 # ======================
-if ENABLE_AUTO_REFRESH:
-    time.sleep(REFRESH_INTERVAL)
-    st.experimental_rerun()
+# if ENABLE_AUTO_REFRESH:
+#     time.sleep(REFRESH_INTERVAL)
+#     st.rerun()
