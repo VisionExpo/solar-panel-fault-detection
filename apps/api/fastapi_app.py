@@ -2,7 +2,6 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import gc
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse

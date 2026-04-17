@@ -6,8 +6,8 @@ helping understand why the model made certain decisions.
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Union
 import numpy as np
+from typing import Dict, Any, Optional
 
 try:
     import lime

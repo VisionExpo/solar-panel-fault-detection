@@ -6,9 +6,9 @@ and measuring performance metrics.
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Dict, Any
 import json
 import time
 
@@ -342,7 +342,7 @@ class ModelComparator:
             try:
                 # Generate predictions
                 predictions = model(self.test_data, training=False).numpy()
-                predicted_classes = np.argmax(predictions, axis=1)
+                _ = np.argmax(predictions, axis=1)
 
                 # For demonstration, assume binary classification
                 # In practice, you'd need true labels
