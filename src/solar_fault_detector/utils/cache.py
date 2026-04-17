@@ -93,12 +93,15 @@ class RedisCache(Cache):
     def __init__(self, host: str = "localhost", port: int = 6379, db: int = 0):
         try:
             import redis
+
             self.redis = redis.Redis(host=host, port=port, db=db)
             self.redis.ping()  # Test connection
         except ImportError:
             raise ImportError("redis package required for RedisCache")
         except Exception as e:
-            logger.warning(f"Redis connection failed: {e}. Falling back to InMemoryCache")
+            logger.warning(
+                f"Redis connection failed: {e}. Falling back to InMemoryCache"
+            )
             self.redis = None
             self.fallback_cache = InMemoryCache()
 
@@ -109,7 +112,11 @@ class RedisCache(Cache):
                 return pickle.loads(data) if data else None
             except Exception as e:
                 logger.warning(f"Redis get failed: {e}")
-                return self.fallback_cache.get(key) if hasattr(self, 'fallback_cache') else None
+                return (
+                    self.fallback_cache.get(key)
+                    if hasattr(self, "fallback_cache")
+                    else None
+                )
         else:
             return self.fallback_cache.get(key)
 
@@ -120,7 +127,7 @@ class RedisCache(Cache):
                 self.redis.set(key, data, ex=ttl)
             except Exception as e:
                 logger.warning(f"Redis set failed: {e}")
-                if hasattr(self, 'fallback_cache'):
+                if hasattr(self, "fallback_cache"):
                     self.fallback_cache.set(key, value, ttl)
         else:
             self.fallback_cache.set(key, value, ttl)
@@ -131,7 +138,7 @@ class RedisCache(Cache):
                 self.redis.delete(key)
             except Exception as e:
                 logger.warning(f"Redis delete failed: {e}")
-                if hasattr(self, 'fallback_cache'):
+                if hasattr(self, "fallback_cache"):
                     self.fallback_cache.delete(key)
         else:
             self.fallback_cache.delete(key)
@@ -142,7 +149,7 @@ class RedisCache(Cache):
                 self.redis.flushdb()
             except Exception as e:
                 logger.warning(f"Redis clear failed: {e}")
-                if hasattr(self, 'fallback_cache'):
+                if hasattr(self, "fallback_cache"):
                     self.fallback_cache.clear()
         else:
             self.fallback_cache.clear()
@@ -153,7 +160,11 @@ class RedisCache(Cache):
                 return self.redis.exists(key) > 0
             except Exception as e:
                 logger.warning(f"Redis exists failed: {e}")
-                return self.fallback_cache.exists(key) if hasattr(self, 'fallback_cache') else False
+                return (
+                    self.fallback_cache.exists(key)
+                    if hasattr(self, "fallback_cache")
+                    else False
+                )
         else:
             return self.fallback_cache.exists(key)
 

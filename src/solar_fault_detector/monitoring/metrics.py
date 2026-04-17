@@ -11,27 +11,48 @@ from typing import Dict, Any, Optional
 
 try:
     from prometheus_client import Counter, Histogram, Gauge, start_http_server
+
     PROMETHEUS_AVAILABLE = True
 except ImportError:
     PROMETHEUS_AVAILABLE = False
+
     # Create dummy classes for when prometheus is not available
     class Counter:
-        def __init__(self, *args, **kwargs): pass
-        def inc(self, *args, **kwargs): pass
-        def labels(self, *args, **kwargs): return self
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def inc(self, *args, **kwargs):
+            pass
+
+        def labels(self, *args, **kwargs):
+            return self
 
     class Histogram:
-        def __init__(self, *args, **kwargs): pass
-        def observe(self, *args, **kwargs): pass
-        def labels(self, *args, **kwargs): return self
+        def __init__(self, *args, **kwargs):
+            pass
+
+        def observe(self, *args, **kwargs):
+            pass
+
+        def labels(self, *args, **kwargs):
+            return self
 
     class Gauge:
-        def __init__(self, *args, **kwargs): pass
-        def set(self, *args, **kwargs): pass
-        def inc(self, *args, **kwargs): pass
-        def dec(self, *args, **kwargs): pass
+        def __init__(self, *args, **kwargs):
+            pass
 
-    def start_http_server(*args, **kwargs): pass
+        def set(self, *args, **kwargs):
+            pass
+
+        def inc(self, *args, **kwargs):
+            pass
+
+        def dec(self, *args, **kwargs):
+            pass
+
+    def start_http_server(*args, **kwargs):
+        pass
+
 
 logger = logging.getLogger(__name__)
 
@@ -50,79 +71,73 @@ class MetricsCollector:
 
         # Prediction metrics
         self.prediction_total = Counter(
-            f'{service_name}_predictions_total',
-            'Total number of predictions made',
-            ['model_type', 'status']
+            f"{service_name}_predictions_total",
+            "Total number of predictions made",
+            ["model_type", "status"],
         )
 
         self.prediction_duration = Histogram(
-            f'{service_name}_prediction_duration_seconds',
-            'Time spent processing predictions',
-            ['model_type'],
-            buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
+            f"{service_name}_prediction_duration_seconds",
+            "Time spent processing predictions",
+            ["model_type"],
+            buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
         )
 
         self.prediction_confidence = Histogram(
-            f'{service_name}_prediction_confidence',
-            'Prediction confidence distribution',
-            ['model_type'],
-            buckets=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0)
+            f"{service_name}_prediction_confidence",
+            "Prediction confidence distribution",
+            ["model_type"],
+            buckets=(0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0),
         )
 
         # System metrics
         self.active_requests = Gauge(
-            f'{service_name}_active_requests',
-            'Number of active requests being processed'
+            f"{service_name}_active_requests",
+            "Number of active requests being processed",
         )
 
         self.memory_usage = Gauge(
-            f'{service_name}_memory_usage_bytes',
-            'Current memory usage in bytes'
+            f"{service_name}_memory_usage_bytes", "Current memory usage in bytes"
         )
 
         self.cpu_usage = Gauge(
-            f'{service_name}_cpu_usage_percent',
-            'Current CPU usage percentage'
+            f"{service_name}_cpu_usage_percent", "Current CPU usage percentage"
         )
 
         # Error metrics
         self.errors_total = Counter(
-            f'{service_name}_errors_total',
-            'Total number of errors',
-            ['error_type', 'component']
+            f"{service_name}_errors_total",
+            "Total number of errors",
+            ["error_type", "component"],
         )
 
         # Cache metrics
         self.cache_hits = Counter(
-            f'{service_name}_cache_hits_total',
-            'Total number of cache hits',
-            ['cache_type']
+            f"{service_name}_cache_hits_total",
+            "Total number of cache hits",
+            ["cache_type"],
         )
 
         self.cache_misses = Counter(
-            f'{service_name}_cache_misses_total',
-            'Total number of cache misses',
-            ['cache_type']
+            f"{service_name}_cache_misses_total",
+            "Total number of cache misses",
+            ["cache_type"],
         )
 
         # Model metrics
         self.model_load_duration = Histogram(
-            f'{service_name}_model_load_duration_seconds',
-            'Time spent loading models',
-            buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0)
+            f"{service_name}_model_load_duration_seconds",
+            "Time spent loading models",
+            buckets=(0.1, 0.5, 1.0, 2.0, 5.0, 10.0),
         )
 
         self.model_loaded = Gauge(
-            f'{service_name}_model_loaded',
-            'Whether the model is currently loaded (1) or not (0)'
+            f"{service_name}_model_loaded",
+            "Whether the model is currently loaded (1) or not (0)",
         )
 
     def record_prediction(
-        self,
-        model_type: str,
-        duration: float,
-        confidence: float,
-        success: bool = True
+        self, model_type: str, duration: float, confidence: float, success: bool = True
     ) -> None:
         """Record prediction metrics."""
         status = "success" if success else "error"
@@ -195,11 +210,7 @@ class HealthChecker:
         current_time = time.time()
 
         # Basic health
-        health = {
-            "status": "healthy",
-            "timestamp": current_time,
-            "checks": {}
-        }
+        health = {"status": "healthy", "timestamp": current_time, "checks": {}}
 
         # Model health check
         if self.model_predictor:
@@ -216,10 +227,7 @@ class HealthChecker:
             model_status = "unknown"
             model_details = "Model predictor not initialized"
 
-        health["checks"]["model"] = {
-            "status": model_status,
-            "details": model_details
-        }
+        health["checks"]["model"] = {"status": model_status, "details": model_details}
 
         # System resources
         try:
@@ -240,7 +248,7 @@ class HealthChecker:
 
         health["checks"]["system"] = {
             "status": system_status,
-            "details": system_details
+            "details": system_details,
         }
 
         # Update last check time
