@@ -33,7 +33,7 @@ class Evaluator:
         y_pred = []
 
         for batch_x, batch_y in dataset:
-            preds = model.predict(batch_x)
+            preds = model(batch_x, training=False).numpy()
             y_true.extend(np.argmax(batch_y, axis=1))
             y_pred.extend(np.argmax(preds, axis=1))
 
@@ -62,7 +62,7 @@ class Evaluator:
         y_pred = []
 
         for batch_x, batch_y in dataset:
-            preds = model.predict(batch_x)
+            preds = model(batch_x, training=False).numpy()
             y_true.extend(np.argmax(batch_y, axis=1))
             y_pred.extend(np.argmax(preds, axis=1))
 

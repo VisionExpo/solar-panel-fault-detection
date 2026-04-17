@@ -47,3 +47,5 @@ mypy>=1.0
 # Dev / Tooling
 # ======================
 pre-commit>=3.4
+python-multipart>=0.0.9
+huggingface-hub>=0.22.2

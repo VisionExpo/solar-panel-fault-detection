@@ -26,7 +26,7 @@ class Predictor:
         image = self.preprocessor.load_and_preprocess(image_path)
         image = tf.expand_dims(image, axis=0)
 
-        probs = self.model.predict(image)[0]
+        probs = self.model(image, training=False).numpy()[0]
 
         return {
             "image": image_path.name,
