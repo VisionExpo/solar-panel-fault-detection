@@ -27,7 +27,8 @@ def download_model_from_huggingface(
         from huggingface_hub import hf_hub_download
     except ImportError:
         print(
-            "ERROR: huggingface-hub not installed. Install with: pip install huggingface-hub"
+            "ERROR: huggingface-hub not installed. "
+            "Install with: pip install huggingface-hub"
         )
         sys.exit(1)
 
