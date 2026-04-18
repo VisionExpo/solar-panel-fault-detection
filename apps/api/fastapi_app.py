@@ -2,7 +2,6 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import gc
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -96,6 +95,3 @@ async def predict_image(file: UploadFile = File(...)):
     finally:
         if temp_path.exists():
             temp_path.unlink()
-
-        # Force garbage collection to prevent memory leak
-        gc.collect()

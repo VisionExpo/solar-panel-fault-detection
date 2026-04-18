@@ -103,7 +103,7 @@ class ModelExplainer:
                     img_float = img.astype(np.float32) / 255.0
                     processed_images.append(img_float)
                 batch = np.array(processed_images)
-                return self.model.predict(batch, verbose=0)
+                return self.model(batch, training=False).numpy()
 
             # Generate explanation
             explanation = self.lime_explainer.explain_instance(
