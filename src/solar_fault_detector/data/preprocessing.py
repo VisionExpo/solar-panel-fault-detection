@@ -3,6 +3,7 @@ import tensorflow as tf
 from pathlib import Path
 from PIL import Image
 
+
 class ImagePreprocessor:
     def __init__(self, config=None):
         self.config = config
