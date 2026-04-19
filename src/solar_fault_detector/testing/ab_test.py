@@ -82,7 +82,9 @@ class ABTester:
         self.active_experiments[config.name] = config
         logger.info(f"Created experiment: {config.name}")
 
-    def assign_variant(self, experiment_name: str, user_id: Optional[str] = None) -> str:
+    def assign_variant(
+        self, experiment_name: str, user_id: Optional[str] = None
+    ) -> str:
         """
         Assign a variant to a user/request based on traffic split.
 
@@ -211,7 +213,10 @@ class ABTester:
             if len(variant_data) == 0:
                 continue
 
-            variant_analysis = {"sample_size": len(variant_data), "metrics": {}}  # type: ignore
+            variant_analysis = {  # type: ignore
+                "sample_size": len(variant_data),
+                "metrics": {},
+            }
 
             # Calculate metrics for each tracked metric
             for metric in config.metrics:
@@ -228,7 +233,9 @@ class ABTester:
 
         # Statistical significance testing (simplified)
         if len(config.variants) == 2 and len(config.metrics) > 0:
-            analysis["significance_tests"] = self._test_significance(df, config)  # type: ignore
+            analysis["significance_tests"] = self._test_significance(  # type: ignore
+                df, config
+            )
 
         return analysis
 
@@ -323,7 +330,9 @@ class ModelComparator:
         self.models = models
         self.test_data = test_data
 
-    def compare_models(self, metrics: Optional[List[str]] = None) -> Dict[str, Dict[str, float]]:
+    def compare_models(
+        self, metrics: Optional[List[str]] = None
+    ) -> Dict[str, Dict[str, float]]:
         """
         Compare models on test data.
 

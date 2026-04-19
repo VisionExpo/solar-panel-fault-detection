@@ -227,7 +227,10 @@ class HealthChecker:
             model_status = "unknown"
             model_details = "Model predictor not initialized"
 
-        health["checks"]["model"] = {"status": model_status, "details": model_details}  # type: ignore
+        health["checks"]["model"] = {  # type: ignore
+            "status": model_status,
+            "details": model_details,
+        }
 
         # System resources
         try:
