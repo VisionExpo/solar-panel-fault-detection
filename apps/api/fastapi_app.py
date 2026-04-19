@@ -2,7 +2,6 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import gc
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -91,11 +90,9 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Inference failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:
         if temp_path.exists():
             temp_path.unlink()
-
-        # Force garbage collection to prevent memory leak
-        gc.collect()

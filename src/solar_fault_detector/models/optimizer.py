@@ -215,12 +215,12 @@ class ModelOptimizer:
         import time
 
         # Warm up
-        _ = model.predict(test_data[:1], verbose=0)
+        _ = model(test_data[:1], training=False).numpy()
 
         times = []
         for _ in range(num_runs):
             start_time = time.time()
-            _ = model.predict(test_data, verbose=0)
+            _ = model(test_data, training=False).numpy()
             end_time = time.time()
             times.append(end_time - start_time)
 
