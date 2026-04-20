@@ -6,7 +6,6 @@ model loading, and preprocessing results.
 """
 
 import hashlib
-import json
 import logging
 import pickle
 from pathlib import Path

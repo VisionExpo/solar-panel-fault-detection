@@ -7,7 +7,7 @@ for the Solar Panel Fault Detection system.
 
 import logging
 import time
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 
 try:
     from prometheus_client import Counter, Histogram, Gauge, start_http_server

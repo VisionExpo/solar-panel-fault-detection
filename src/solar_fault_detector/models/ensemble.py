@@ -1,7 +1,6 @@
 from typing import List
 from pathlib import Path
 
-import numpy as np
 import tensorflow as tf
 from tensorflow.keras import layers, models
 

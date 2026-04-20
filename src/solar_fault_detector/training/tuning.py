@@ -1,5 +1,4 @@
 import wandb
-import tensorflow as tf
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.training.trainer import Trainer
