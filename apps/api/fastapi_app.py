@@ -90,8 +90,12 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        logger.error(f"Internal server error during prediction: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail="An internal server error occurred.")
+        logger.error(
+            f"Internal server error during prediction: {str(e)}", exc_info=True
+        )
+        raise HTTPException(
+            status_code=500, detail="An internal server error occurred."
+        )
 
     finally:
         if temp_path.exists():
