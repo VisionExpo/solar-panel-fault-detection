@@ -70,7 +70,7 @@ class ModelExplainer:
     def explain_prediction_lime(
         self,
         image: np.ndarray,
-        prediction_class: int = None,
+        prediction_class: int | None = None,
         num_samples: int = 1000,
         num_features: int = 10,
     ) -> Dict[str, Any]:

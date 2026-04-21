@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any, Tuple
 
 import numpy as np
 import tensorflow as tf
@@ -45,11 +45,13 @@ class BatchInferenceEngine:
 
         # Initialize caches
         self.use_cache = use_cache
+        self.prediction_cache: Optional[PredictionCache] = None
+        self.model_cache: Optional[ModelCache] = None
         if use_cache:
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
 
-                cache = RedisCache()
+                cache: Any = RedisCache()
             else:
                 from solar_fault_detector.utils.cache import InMemoryCache
 
@@ -57,9 +59,6 @@ class BatchInferenceEngine:
 
             self.prediction_cache = PredictionCache(cache)
             self.model_cache = ModelCache(cache)
-        else:
-            self.prediction_cache = None
-            self.model_cache = None
 
         # Load model with caching
         self.model = self._load_model(model_path)
@@ -94,12 +93,12 @@ class BatchInferenceEngine:
 
         return results
 
-    def _predict_batch(self, image_paths: List[Path]) -> List[Dict]:
+    def _predict_batch(self, image_paths: List[Path]) -> List[Dict[str, Any]]:
         """Predict on a single batch with caching."""
-        results = []
+        results: List[Tuple[Optional[int], Dict[str, Any]]] = []
         # Check cache first
         if self.prediction_cache:
-            cached_results = []
+            cached_results: List[Tuple[Optional[int], Dict[str, Any]]] = []
             uncached_paths = []
             uncached_indices = []
 
@@ -159,13 +158,14 @@ class BatchInferenceEngine:
                 results.append((None, result))
 
         # Sort by original order if needed
+        final_results: List[Dict[str, Any]] = []
         if results and results[0][0] is not None:
-            results.sort(key=lambda x: x[0])
-            results = [r for _, r in results]
+            results.sort(key=lambda x: x[0] if x[0] is not None else 0)
+            final_results = [r for _, r in results]
         else:
-            results = [r for _, r in results]
+            final_results = [r for _, r in results]
 
-        return results
+        return final_results
 
     def predict_directory(
         self, image_dir: Path, recursive: bool = False, file_pattern: str = "*.jpg"

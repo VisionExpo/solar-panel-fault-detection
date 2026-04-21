@@ -82,7 +82,7 @@ class ABTester:
         self.active_experiments[config.name] = config
         logger.info(f"Created experiment: {config.name}")
 
-    def assign_variant(self, experiment_name: str, user_id: str = None) -> str:
+    def assign_variant(self, experiment_name: str, user_id: str | None = None) -> str:
         """
         Assign a variant to a user/request based on traffic split.
 
@@ -123,7 +123,7 @@ class ABTester:
         experiment_name: str,
         variant: str,
         metrics: Dict[str, float],
-        user_id: str = None,
+        user_id: str | None = None,
     ) -> None:
         """
         Record experiment result.
@@ -198,7 +198,7 @@ class ABTester:
         if not config:
             return {"error": "Experiment configuration not found"}
 
-        analysis = {
+        analysis: Dict[str, Any] = {
             "experiment_name": experiment_name,
             "total_samples": len(df),
             "variants": {},
@@ -211,7 +211,7 @@ class ABTester:
             if len(variant_data) == 0:
                 continue
 
-            variant_analysis = {"sample_size": len(variant_data), "metrics": {}}
+            variant_analysis: Dict[str, Any] = {"sample_size": len(variant_data), "metrics": {}}
 
             # Calculate metrics for each tracked metric
             for metric in config.metrics:
@@ -237,7 +237,7 @@ class ABTester:
     ) -> Dict[str, Any]:
         """Perform statistical significance tests between variants."""
         variant_a, variant_b = config.variants
-        tests = {}
+        tests: Dict[str, Any] = {}
 
         for metric in config.metrics:
             if metric not in df.columns:
@@ -323,7 +323,7 @@ class ModelComparator:
         self.models = models
         self.test_data = test_data
 
-    def compare_models(self, metrics: List[str] = None) -> Dict[str, Dict[str, float]]:
+    def compare_models(self, metrics: List[str] | None = None) -> Dict[str, Any]:
         """
         Compare models on test data.
 
@@ -353,6 +353,6 @@ class ModelComparator:
 
             except Exception as e:
                 logger.error(f"Failed to evaluate {model_name}: {e}")
-                results[model_name] = {"error": str(e)}
+                results[model_name] = {"error": str(e)}  # type: ignore
 
         return results
