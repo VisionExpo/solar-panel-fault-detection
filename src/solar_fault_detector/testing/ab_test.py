@@ -211,7 +211,10 @@ class ABTester:
             if len(variant_data) == 0:
                 continue
 
-            variant_analysis: Dict[str, Any] = {"sample_size": len(variant_data), "metrics": {}}
+            variant_analysis: Dict[str, Any] = {
+                "sample_size": len(variant_data),
+                "metrics": {},
+            }
 
             # Calculate metrics for each tracked metric
             for metric in config.metrics:

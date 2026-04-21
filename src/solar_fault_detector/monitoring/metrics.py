@@ -214,7 +214,11 @@ class HealthChecker:
         current_time = time.time()
 
         # Basic health
-        health: Dict[str, Any] = {"status": "healthy", "timestamp": current_time, "checks": {}}
+        health: Dict[str, Any] = {
+            "status": "healthy",
+            "timestamp": current_time,
+            "checks": {},
+        }
 
         # Model health check
         if self.model_predictor:
