@@ -6,7 +6,7 @@ helping understand why the model made certain decisions.
 """
 
 import logging
-from typing import Dict, List, Any, Optional, Union
+from typing import Dict, Any, Optional
 import numpy as np
 
 try:

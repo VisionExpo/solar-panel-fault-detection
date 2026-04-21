@@ -83,7 +83,7 @@ class ModelOptimizer:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
-        tflite_model = converter.convert()
+        _ = converter.convert()
 
         # Convert back to Keras for compatibility
         # Note: This is a simplified approach. In production, you might want to
@@ -113,7 +113,7 @@ class ModelOptimizer:
         converter.inference_input_type = tf.int8
         converter.inference_output_type = tf.int8
 
-        tflite_model = converter.convert()
+        _ = converter.convert()
 
         logger.info("Int8 quantization applied")
         return model  # Return original model for compatibility
@@ -130,7 +130,7 @@ class ModelOptimizer:
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.target_spec.supported_types = [tf.float16]
 
-        tflite_model = converter.convert()
+        _ = converter.convert()
 
         logger.info("Float16 quantization applied")
         return model  # Return original model for compatibility
@@ -153,10 +153,6 @@ class ModelOptimizer:
         # Enable XLA compilation for faster execution
         if batch_size:
             # Set fixed batch size for better optimization
-            inputs = tf.keras.Input(
-                shape=(batch_size, *self.config.img_size, self.config.num_channels),
-                dtype=tf.float32,
-            )
             # This is a simplified approach - in practice you'd rebuild the model
             pass
 

@@ -199,9 +199,13 @@ class RealTimeMonitor:
         """Trigger an alert."""
         severity = self._determine_severity(rule, value)
 
+        msg = (
+            f"Alert triggered: {rule.metric} {rule.condition} "
+            f"{rule.threshold} (current: {value})"
+        )
         alert = Alert(
             rule_name=rule.name,
-            message=f"Alert triggered: {rule.metric} {rule.condition} {rule.threshold} (current: {value})",
+            message=msg,
             severity=severity,
             timestamp=datetime.now(),
             value=value,
