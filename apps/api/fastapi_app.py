@@ -2,10 +2,11 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import gc
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+
+import tensorflow as tf
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.inference.predictor import Predictor
@@ -29,6 +30,17 @@ app = FastAPI(
 config = Config()
 UPLOAD_DIR = Path("artifacts/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# ======================
+# CPU Memory / Thread Configuration
+# ======================
+# Prevent OOM crashes on CPU deployments (like Render) by limiting threads
+try:
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    tf.config.threading.set_intra_op_parallelism_threads(1)
+    logger.info("✅ Configured CPU thread limits to prevent memory bloat")
+except Exception as e:
+    logger.error(f"❌ Failed to configure CPU thread limits: {e}")
 
 # ======================
 # Model Loading with Fallback
@@ -96,6 +108,3 @@ async def predict_image(file: UploadFile = File(...)):
     finally:
         if temp_path.exists():
             temp_path.unlink()
-
-        # Force garbage collection to prevent memory leak
-        gc.collect()
