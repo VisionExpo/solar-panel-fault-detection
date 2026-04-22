@@ -351,4 +351,4 @@ class AnomalyDetector:
         latest_value = values[-1]
         z_score = abs(latest_value - mean) / std
 
-        return z_score > self.threshold_sigma
+        return bool(z_score > self.threshold_sigma)

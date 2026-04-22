@@ -1,4 +1,4 @@
-from typing import Dict, Optional, List
+from typing import Dict, Optional, List, Any
 from pathlib import Path
 
 import wandb
@@ -22,7 +22,7 @@ class WandbTracker:
         self.training_config = training_config
         self.model_config = model_config
         self.run_name = run_name
-        self._run = None
+        self._run: Any = None
 
     def start(self) -> None:
         """
@@ -36,7 +36,7 @@ class WandbTracker:
             entity=self.training_config.wandb_entity,
             group=self.training_config.wandb_run_group,
             name=self.run_name,
-            mode=self.training_config.wandb_mode,
+            mode=self.training_config.wandb_mode,  # type: ignore
             config={
                 **vars(self.model_config),
             },
