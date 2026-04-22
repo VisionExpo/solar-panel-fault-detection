@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 import numpy as np
 import tensorflow as tf
@@ -46,6 +46,7 @@ class BatchInferenceEngine:
         # Initialize caches
         self.use_cache = use_cache
         if use_cache:
+            cache: Any
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
 
@@ -55,8 +56,8 @@ class BatchInferenceEngine:
 
                 cache = InMemoryCache()
 
-            self.prediction_cache = PredictionCache(cache)
-            self.model_cache = ModelCache(cache)
+            self.prediction_cache: Optional[PredictionCache] = PredictionCache(cache)
+            self.model_cache: Optional[ModelCache] = ModelCache(cache)
         else:
             self.prediction_cache = None
             self.model_cache = None
@@ -94,9 +95,9 @@ class BatchInferenceEngine:
 
         return results
 
-    def _predict_batch(self, image_paths: List[Path]) -> List[Dict]:
+    def _predict_batch(self, image_paths: List[Path]) -> List[Dict[Any, Any]]:
         """Predict on a single batch with caching."""
-        results = []
+        results: List[Any] = []
         # Check cache first
         if self.prediction_cache:
             cached_results = []

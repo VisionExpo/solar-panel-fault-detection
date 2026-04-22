@@ -17,7 +17,7 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     # Create dummy classes for when prometheus is not available
-    class Counter:
+    class Counter:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
@@ -27,7 +27,7 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Histogram:
+    class Histogram:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
@@ -37,7 +37,7 @@ except ImportError:
         def labels(self, *args, **kwargs):
             return self
 
-    class Gauge:
+    class Gauge:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
@@ -210,7 +210,11 @@ class HealthChecker:
         current_time = time.time()
 
         # Basic health
-        health = {"status": "healthy", "timestamp": current_time, "checks": {}}
+        health: Dict[str, Any] = {
+            "status": "healthy",
+            "timestamp": current_time,
+            "checks": {},
+        }
 
         # Model health check
         if self.model_predictor:

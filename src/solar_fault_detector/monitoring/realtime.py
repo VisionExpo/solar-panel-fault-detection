@@ -92,7 +92,7 @@ class RealTimeMonitor:
         self.alert_callbacks.append(callback)
 
     def record_metric(
-        self, metric_name: str, value: float, labels: Dict = None
+        self, metric_name: str, value: float, labels: Optional[Dict[Any, Any]] = None
     ) -> None:
         """
         Record a metric value.
