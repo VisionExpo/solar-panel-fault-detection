@@ -114,7 +114,7 @@ class BatchInferenceEngine:
                     else:
                         uncached_paths.append(path)
                         uncached_indices.append(idx)
-                except Exception as e:
+                except Exception:
                     # On error, process without caching
                     uncached_paths.append(path)
                     uncached_indices.append(idx)
