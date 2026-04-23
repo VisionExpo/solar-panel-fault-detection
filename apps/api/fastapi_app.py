@@ -3,6 +3,7 @@ import shutil
 import uuid
 import logging
 import gc
+import tensorflow as tf
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -20,6 +21,10 @@ logger = logging.getLogger(__name__)
 # ======================
 # App Initialization
 # ======================
+# Thread limits for CPU constraints
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
+
 app = FastAPI(
     title="Solar Panel Fault Detection API",
     description="Real-time inference API for solar panel fault detection",
@@ -91,11 +96,9 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Prediction failed: {e}")
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:
         if temp_path.exists():
             temp_path.unlink()
-
-        # Force garbage collection to prevent memory leak
-        gc.collect()
