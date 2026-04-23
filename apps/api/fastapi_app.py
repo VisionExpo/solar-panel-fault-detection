@@ -2,7 +2,6 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import gc
 import tensorflow as tf
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
