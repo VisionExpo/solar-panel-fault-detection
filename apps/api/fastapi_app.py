@@ -2,10 +2,11 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import gc
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+
+import tensorflow as tf
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.inference.predictor import Predictor
@@ -16,6 +17,20 @@ from solar_fault_detector.utils.download_model import ensure_model_exists
 # ======================
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# ======================
+# TensorFlow Config Setup
+# ======================
+gpus = tf.config.list_physical_devices('GPU')
+if gpus:
+    try:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+    except RuntimeError as e:
+        logger.error(f"Failed to set memory growth for GPUs: {e}")
+else:
+    tf.config.threading.set_inter_op_parallelism_threads(1)
+    tf.config.threading.set_intra_op_parallelism_threads(1)
 
 # ======================
 # App Initialization
@@ -91,11 +106,9 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Prediction error: {e}")
+        raise HTTPException(status_code=500, detail="An internal server error occurred while processing the image.")
 
     finally:
         if temp_path.exists():
             temp_path.unlink()
-
-        # Force garbage collection to prevent memory leak
-        gc.collect()
