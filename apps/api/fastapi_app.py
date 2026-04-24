@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 # ======================
 # TensorFlow Config Setup
 # ======================
-gpus = tf.config.list_physical_devices('GPU')
+gpus = tf.config.list_physical_devices("GPU")
 if gpus:
     try:
         for gpu in gpus:
@@ -107,7 +107,10 @@ async def predict_image(file: UploadFile = File(...)):
 
     except Exception as e:
         logger.error(f"Prediction error: {e}")
-        raise HTTPException(status_code=500, detail="An internal server error occurred while processing the image.")
+        raise HTTPException(
+            status_code=500,
+            detail="An internal server error occurred while processing the image.",
+        )
 
     finally:
         if temp_path.exists():
