@@ -8,7 +8,7 @@ and measuring performance metrics.
 import logging
 from dataclasses import dataclass
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 import json
 import time
 

@@ -27,7 +27,7 @@ class Trainer:
 
         # Model
         self.model_wrapper = ModelFactory.create(
-            model_type=model_type,  # type: ignore
+            model_type=factory_model_type,
             config=config.model,
             num_models=num_ensemble_models,
         )

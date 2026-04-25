@@ -7,8 +7,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 import tensorflow as tf
 
-import tensorflow as tf
-
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.inference.predictor import Predictor
 from solar_fault_detector.utils.download_model import ensure_model_exists
