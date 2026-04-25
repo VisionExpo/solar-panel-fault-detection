@@ -36,15 +36,15 @@ def download_model_from_huggingface(
     print(f"Downloading model from Hugging Face: {repo_id}/{model_filename}")
 
     # Note: force_filename is not a valid argument for hf_hub_download
-    model_path = hf_hub_download(
+    downloaded_path = hf_hub_download(
         repo_id=repo_id,
         filename=model_filename,
         cache_dir=str(cache_dir),
     )
 
-    model_path = Path(model_path)
-    print(f"Model downloaded successfully to: {model_path}")
-    return model_path
+    final_model_path = Path(downloaded_path)
+    print(f"Model downloaded successfully to: {final_model_path}")
+    return final_model_path
 
 
 def ensure_model_exists(
