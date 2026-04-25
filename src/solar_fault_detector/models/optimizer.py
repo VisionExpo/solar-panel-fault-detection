@@ -189,8 +189,8 @@ class ModelOptimizer:
             tf.saved_model.save(model, str(save_path))
         elif save_format == "tflite":
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
-            tflite_model = converter.convert()
-            save_path.with_suffix(".tflite").write_bytes(tflite_model)
+            converter.convert()
+            save_path.with_suffix(".tflite").write_bytes(converter.convert())
         else:
             raise ValueError(f"Unsupported save format: {save_format}")
 
@@ -215,19 +215,19 @@ class ModelOptimizer:
         import time
 
         # Warm up
-        _ = model.predict(test_data[:1], verbose=0)
+        _ = model(test_data[:1], training=False).numpy()
 
         times = []
         for _ in range(num_runs):
             start_time = time.time()
-            _ = model.predict(test_data, verbose=0)
+            _ = model(test_data, training=False).numpy()
             end_time = time.time()
             times.append(end_time - start_time)
 
-        times = np.array(times)
+        times_arr = np.array(times)
         stats = {
-            "mean_time": float(np.mean(times)),
-            "std_time": float(np.std(times)),
+            "mean_time": float(np.mean(times_arr)),
+            "std_time": float(np.std(times_arr)),
             "min_time": float(np.min(times)),
             "max_time": float(np.max(times)),
             "throughput": len(test_data) / np.mean(times),

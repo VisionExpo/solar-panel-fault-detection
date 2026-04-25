@@ -2,10 +2,12 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
-import tensorflow as tf
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
+import tensorflow as tf
+
+import tensorflow as tf
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.inference.predictor import Predictor
@@ -33,6 +35,20 @@ app = FastAPI(
 config = Config()
 UPLOAD_DIR = Path("artifacts/uploads")
 UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+
+# ======================
+# TensorFlow Configuration
+# ======================
+try:
+    gpus = tf.config.list_physical_devices("GPU")
+    if gpus:
+        for gpu in gpus:
+            tf.config.experimental.set_memory_growth(gpu, True)
+        logger.info(f"Configured memory growth for {len(gpus)} GPUs")
+    else:
+        logger.info("No GPUs found, using CPU")
+except Exception as e:
+    logger.warning(f"Failed to configure GPU memory growth: {e}")
 
 # ======================
 # Model Loading with Fallback
@@ -95,7 +111,7 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        logger.error(f"Prediction failed: {e}")
+        logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:

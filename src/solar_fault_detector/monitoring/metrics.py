@@ -17,41 +17,45 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     # Create dummy classes for when prometheus is not available
-    class Counter:
+    class Counter:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
-        def inc(self, *args, **kwargs):
+        def inc(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        def labels(self, *args, **kwargs):
+        def labels(self, *args: Any, **kwargs: Any) -> "DummyCounter":
             return self
 
-    class Histogram:
+    class Histogram:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
-        def observe(self, *args, **kwargs):
+        def observe(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        def labels(self, *args, **kwargs):
+        def labels(self, *args: Any, **kwargs: Any) -> "DummyHistogram":
             return self
 
-    class Gauge:
+    class Gauge:  # type: ignore
         def __init__(self, *args, **kwargs):
             pass
 
-        def set(self, *args, **kwargs):
+        def set(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        def inc(self, *args, **kwargs):
+        def inc(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-        def dec(self, *args, **kwargs):
+        def dec(self, *args: Any, **kwargs: Any) -> None:
             pass
 
-    def start_http_server(*args, **kwargs):
+    def start_http_server(*args: Any, **kwargs: Any) -> None:
         pass
+
+    Counter = DummyCounter  # type: ignore
+    Histogram = DummyHistogram  # type: ignore
+    Gauge = DummyGauge  # type: ignore
 
 
 logger = logging.getLogger(__name__)
@@ -195,9 +199,9 @@ class HealthChecker:
     Health check utilities for system monitoring.
     """
 
-    def __init__(self, model_predictor=None):
+    def __init__(self, model_predictor: Any = None):
         self.model_predictor = model_predictor
-        self.last_health_check = 0
+        self.last_health_check: float = 0
         self.health_check_interval = 60  # seconds
 
     def health_check(self) -> Dict[str, Any]:
@@ -210,7 +214,11 @@ class HealthChecker:
         current_time = time.time()
 
         # Basic health
-        health = {"status": "healthy", "timestamp": current_time, "checks": {}}
+        health: Dict[str, Any] = {
+            "status": "healthy",
+            "timestamp": current_time,
+            "checks": {},
+        }
 
         # Model health check
         if self.model_predictor:
@@ -227,7 +235,10 @@ class HealthChecker:
             model_status = "unknown"
             model_details = "Model predictor not initialized"
 
-        health["checks"]["model"] = {"status": model_status, "details": model_details}
+        health["checks"]["model"] = {  # type: ignore
+            "status": model_status,
+            "details": model_details,
+        }
 
         # System resources
         try:
@@ -246,7 +257,7 @@ class HealthChecker:
             system_status = "unknown"
             system_details = "System monitoring not available"
 
-        health["checks"]["system"] = {
+        health["checks"]["system"] = {  # type: ignore
             "status": system_status,
             "details": system_details,
         }

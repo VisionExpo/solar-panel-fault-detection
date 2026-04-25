@@ -52,7 +52,7 @@ class RealTimeMonitor:
     - Performance dashboards
     """
 
-    def __init__(self, metrics_collector=None):
+    def __init__(self, metrics_collector: Any = None):
         """
         Initialize real-time monitor.
 
@@ -92,7 +92,7 @@ class RealTimeMonitor:
         self.alert_callbacks.append(callback)
 
     def record_metric(
-        self, metric_name: str, value: float, labels: Dict = None
+        self, metric_name: str, value: float, labels: Optional[Dict] = None
     ) -> None:
         """
         Record a metric value.
@@ -199,9 +199,14 @@ class RealTimeMonitor:
         """Trigger an alert."""
         severity = self._determine_severity(rule, value)
 
+        msg = (
+            f"Alert triggered: {rule.metric} {rule.condition} "
+            f"{rule.threshold} (current: {value})"
+        )
         alert = Alert(
             rule_name=rule.name,
-            message=f"Alert triggered: {rule.metric} {rule.condition} {rule.threshold} (current: {value})",
+            message=f"Alert triggered: {rule.metric} {rule.condition} "
+            f"{rule.threshold} (current: {value})",
             severity=severity,
             timestamp=datetime.now(),
             value=value,
@@ -348,4 +353,4 @@ class AnomalyDetector:
         latest_value = values[-1]
         z_score = abs(latest_value - mean) / std
 
-        return z_score > self.threshold_sigma
+        return bool(z_score > self.threshold_sigma)
