@@ -86,7 +86,7 @@ def health_check():
 # Inference Endpoint
 # ======================
 @app.post("/predict")
-async def predict_image(file: UploadFile = File(...)):
+def predict_image(file: UploadFile = File(...)):
     if not MODEL_READY:
         raise HTTPException(
             status_code=503,

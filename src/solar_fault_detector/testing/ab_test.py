@@ -350,7 +350,7 @@ class ModelComparator:
         for model_name, model in self.models.items():
             try:
                 # Generate predictions
-                predictions = model(self.test_data, training=False).numpy()
+                predictions = model.predict(self.test_data)
                 _ = np.argmax(predictions, axis=1)
 
                 # For demonstration, assume binary classification
