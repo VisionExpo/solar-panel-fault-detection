@@ -200,7 +200,7 @@ class ABTester:
         if not config:
             return {"error": "Experiment configuration not found"}
 
-        analysis = {
+        analysis: Dict[str, Any] = {
             "experiment_name": experiment_name,
             "total_samples": len(df),
             "variants": {},

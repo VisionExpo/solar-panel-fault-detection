@@ -19,6 +19,10 @@ class Trainer:
         model_type: str = "cnn",
         num_ensemble_models: int = 3,
     ):
+        from typing import cast, Literal
+
+        # Ensure correct model_type typing for ModelFactory
+        factory_model_type = cast(Literal["cnn", "ensemble"], model_type)
         self.config = config
 
         # Model
