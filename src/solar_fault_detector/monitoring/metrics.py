@@ -17,8 +17,8 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     # Create dummy classes for when prometheus is not available
-    class DummyCounter:
-        def __init__(self, *args: Any, **kwargs: Any):
+    class Counter:  # type: ignore
+        def __init__(self, *args, **kwargs):
             pass
 
         def inc(self, *args: Any, **kwargs: Any) -> None:
@@ -27,8 +27,8 @@ except ImportError:
         def labels(self, *args: Any, **kwargs: Any) -> "DummyCounter":
             return self
 
-    class DummyHistogram:
-        def __init__(self, *args: Any, **kwargs: Any):
+    class Histogram:  # type: ignore
+        def __init__(self, *args, **kwargs):
             pass
 
         def observe(self, *args: Any, **kwargs: Any) -> None:
@@ -37,8 +37,8 @@ except ImportError:
         def labels(self, *args: Any, **kwargs: Any) -> "DummyHistogram":
             return self
 
-    class DummyGauge:
-        def __init__(self, *args: Any, **kwargs: Any):
+    class Gauge:  # type: ignore
+        def __init__(self, *args, **kwargs):
             pass
 
         def set(self, *args: Any, **kwargs: Any) -> None:
@@ -235,7 +235,10 @@ class HealthChecker:
             model_status = "unknown"
             model_details = "Model predictor not initialized"
 
-        health["checks"]["model"] = {"status": model_status, "details": model_details}
+        health["checks"]["model"] = {  # type: ignore
+            "status": model_status,
+            "details": model_details,
+        }
 
         # System resources
         try:
@@ -254,7 +257,7 @@ class HealthChecker:
             system_status = "unknown"
             system_details = "System monitoring not available"
 
-        health["checks"]["system"] = {
+        health["checks"]["system"] = {  # type: ignore
             "status": system_status,
             "details": system_details,
         }

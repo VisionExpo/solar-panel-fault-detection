@@ -105,7 +105,7 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        logger.error(f"Internal server error during prediction: {str(e)}")
+        logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:

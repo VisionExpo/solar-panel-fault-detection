@@ -153,6 +153,10 @@ class ModelOptimizer:
         # Enable XLA compilation for faster execution
         if batch_size:
             # Set fixed batch size for better optimization
+            _ = tf.keras.Input(
+                shape=(batch_size, *self.config.img_size, self.config.num_channels),
+                dtype=tf.float32,
+            )
             # This is a simplified approach - in practice you'd rebuild the model
             pass
 
@@ -185,8 +189,8 @@ class ModelOptimizer:
             tf.saved_model.save(model, str(save_path))
         elif save_format == "tflite":
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
-            tflite_model = converter.convert()
-            save_path.with_suffix(".tflite").write_bytes(tflite_model)
+            converter.convert()
+            save_path.with_suffix(".tflite").write_bytes(converter.convert())
         else:
             raise ValueError(f"Unsupported save format: {save_format}")
 
@@ -211,12 +215,12 @@ class ModelOptimizer:
         import time
 
         # Warm up
-        _ = model.predict(test_data[:1], verbose=0)
+        _ = model(test_data[:1], training=False).numpy()
 
         times = []
         for _ in range(num_runs):
             start_time = time.time()
-            _ = model.predict(test_data, verbose=0)
+            _ = model(test_data, training=False).numpy()
             end_time = time.time()
             times.append(end_time - start_time)
 

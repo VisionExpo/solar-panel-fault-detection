@@ -337,23 +337,17 @@ with tf.device('/GPU:0'):  # Force GPU
 
 ### Issue: Memory usage grows over time (memory leak)
 
-**Cause**: Models or images not being garbage collected
+**Cause**: Using `model.predict()` which caches prediction graphs
 
 **Solution**:
+To prevent Out-Of-Memory (OOM) crashes and memory leaks, use `model(batch, training=False).numpy()` instead of `model.predict()`. Avoid using `gc.collect()` as it causes latency and fails to free unmanaged TF memory.
+
 ```python
-# Ensure cleanup after prediction
-import gc
+# Instead of:
+# predictions = model.predict(batch)
 
-# Make prediction
-result = predictor.predict(image_path)
-
-# Force garbage collection
-gc.collect()
-
-# For batch processing, process in chunks
-for batch in batch_generator(image_paths, batch_size=32):
-    results = engine.predict_batch(batch)
-    gc.collect()  # Clean up after each batch
+# Use:
+predictions = model(batch, training=False).numpy()
 ```
 
 ---

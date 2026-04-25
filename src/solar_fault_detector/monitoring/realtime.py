@@ -92,7 +92,7 @@ class RealTimeMonitor:
         self.alert_callbacks.append(callback)
 
     def record_metric(
-        self, metric_name: str, value: float, labels: Dict[str, Any] | None = None
+        self, metric_name: str, value: float, labels: Optional[Dict] = None
     ) -> None:
         """
         Record a metric value.
@@ -205,7 +205,8 @@ class RealTimeMonitor:
         )
         alert = Alert(
             rule_name=rule.name,
-            message=msg,
+            message=f"Alert triggered: {rule.metric} {rule.condition} "
+            f"{rule.threshold} (current: {value})",
             severity=severity,
             timestamp=datetime.now(),
             value=value,

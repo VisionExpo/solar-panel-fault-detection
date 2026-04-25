@@ -6,8 +6,8 @@ helping understand why the model made certain decisions.
 """
 
 import logging
-from typing import Dict, Any, Optional
 import numpy as np
+from typing import Dict, Any, Optional
 
 try:
     import lime
@@ -70,7 +70,7 @@ class ModelExplainer:
     def explain_prediction_lime(
         self,
         image: np.ndarray,
-        prediction_class: int | None = None,
+        prediction_class: Optional[int] = None,
         num_samples: int = 1000,
         num_features: int = 10,
     ) -> Dict[str, Any]:
@@ -103,7 +103,7 @@ class ModelExplainer:
                     img_float = img.astype(np.float32) / 255.0
                     processed_images.append(img_float)
                 batch = np.array(processed_images)
-                return self.model.predict(batch, verbose=0)
+                return self.model(batch, training=False).numpy()
 
             # Generate explanation
             explanation = self.lime_explainer.explain_instance(
