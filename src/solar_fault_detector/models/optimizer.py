@@ -224,10 +224,10 @@ class ModelOptimizer:
             end_time = time.time()
             times.append(end_time - start_time)
 
-        times = np.array(times)
+        times_arr = np.array(times)
         stats = {
-            "mean_time": float(np.mean(times)),
-            "std_time": float(np.std(times)),
+            "mean_time": float(np.mean(times_arr)),
+            "std_time": float(np.std(times_arr)),
             "min_time": float(np.min(times)),
             "max_time": float(np.max(times)),
             "throughput": len(test_data) / np.mean(times),

@@ -345,7 +345,7 @@ class ModelComparator:
         if metrics is None:
             metrics = ["accuracy", "precision", "recall", "f1_score"]
 
-        results = {}
+        results: Dict[str, Any] = {}
 
         for model_name, model in self.models.items():
             try:

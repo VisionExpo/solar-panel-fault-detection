@@ -48,6 +48,7 @@ class BatchInferenceEngine:
         self.prediction_cache: Optional[PredictionCache] = None
         self.model_cache: Optional[ModelCache] = None
         if use_cache:
+            cache: Any
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
 
