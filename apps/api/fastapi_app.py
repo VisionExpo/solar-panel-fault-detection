@@ -22,6 +22,10 @@ logger = logging.getLogger(__name__)
 # ======================
 # App Initialization
 # ======================
+# Thread limits for CPU constraints
+tf.config.threading.set_inter_op_parallelism_threads(1)
+tf.config.threading.set_intra_op_parallelism_threads(1)
+
 app = FastAPI(
     title="Solar Panel Fault Detection API",
     description="Real-time inference API for solar panel fault detection",
