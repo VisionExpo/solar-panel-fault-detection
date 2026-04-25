@@ -90,7 +90,8 @@ async def predict_image(file: UploadFile = File(...)):
         return JSONResponse(content=prediction)
 
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        logger.error(f"Prediction failed: {e}", exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:
         if temp_path.exists():
