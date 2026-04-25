@@ -35,11 +35,11 @@ def download_model_from_huggingface(
     cache_dir.mkdir(parents=True, exist_ok=True)
     print(f"Downloading model from Hugging Face: {repo_id}/{model_filename}")
 
-    model_path = hf_hub_download(  # type: ignore
+    # Note: force_filename is not a valid argument for hf_hub_download
+    model_path = hf_hub_download(
         repo_id=repo_id,
         filename=model_filename,
         cache_dir=str(cache_dir),
-        force_filename=model_filename,
     )
 
     model_path = Path(model_path)

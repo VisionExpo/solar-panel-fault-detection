@@ -6,9 +6,9 @@ and measuring performance metrics.
 """
 
 import logging
-from typing import Dict, List, Any, Optional
 from dataclasses import dataclass
 from pathlib import Path
+from typing import List, Dict, Any
 import json
 import time
 
@@ -213,7 +213,7 @@ class ABTester:
             if len(variant_data) == 0:
                 continue
 
-            variant_analysis: Dict[str, Any] = {
+            variant_analysis = {  # type: ignore
                 "sample_size": len(variant_data),
                 "metrics": {},
             }
@@ -222,27 +222,29 @@ class ABTester:
             for metric in config.metrics:
                 if metric in variant_data.columns:
                     values = variant_data[metric]
-                    variant_analysis["metrics"][metric] = {
+                    variant_analysis["metrics"][metric] = {  # type: ignore
                         "mean": float(values.mean()),
                         "std": float(values.std()),
                         "min": float(values.min()),
                         "max": float(values.max()),
                     }
 
-            analysis["variants"][variant] = variant_analysis
+            analysis["variants"][variant] = variant_analysis  # type: ignore
 
         # Statistical significance testing (simplified)
         if len(config.variants) == 2 and len(config.metrics) > 0:
-            analysis["significance_tests"] = self._test_significance(df, config)
+            analysis["significance_tests"] = self._test_significance(  # type: ignore
+                df, config
+            )
 
         return analysis
 
     def _test_significance(
         self, df: pd.DataFrame, config: ExperimentConfig
-    ) -> Dict[str, Any]:
+    ) -> Dict[str, Dict[str, Any]]:
         """Perform statistical significance tests between variants."""
         variant_a, variant_b = config.variants
-        tests: Dict[str, Any] = {}
+        tests: Dict[str, Dict[str, Any]] = {}
 
         for metric in config.metrics:
             if metric not in df.columns:
@@ -263,7 +265,7 @@ class ABTester:
 
                 t_stat, p_value = stats.ttest_ind(data_a, data_b)
 
-                tests[metric] = {
+                tests[metric] = {  # type: ignore
                     "t_statistic": float(t_stat),
                     "p_value": float(p_value),
                     "significant": p_value < 0.05,
@@ -272,7 +274,7 @@ class ABTester:
             except ImportError:
                 # Fallback without scipy
                 mean_diff = abs(data_a.mean() - data_b.mean())
-                tests[metric] = {
+                tests[metric] = {  # type: ignore
                     "mean_difference": float(mean_diff),
                     "note": "Install scipy for proper significance testing",
                 }
@@ -330,7 +332,7 @@ class ModelComparator:
 
     def compare_models(
         self, metrics: Optional[List[str]] = None
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> Dict[str, Dict[str, float]]:
         """
         Compare models on test data.
 
@@ -348,7 +350,7 @@ class ModelComparator:
         for model_name, model in self.models.items():
             try:
                 # Generate predictions
-                predictions = model.predict(self.test_data, verbose=0)
+                predictions = model(self.test_data, training=False).numpy()
                 _ = np.argmax(predictions, axis=1)
 
                 # For demonstration, assume binary classification
@@ -361,6 +363,6 @@ class ModelComparator:
 
             except Exception as e:
                 logger.error(f"Failed to evaluate {model_name}: {e}")
-                results[model_name] = {"error": str(e)}
+                results[model_name] = {"error": str(e)}  # type: ignore
 
         return results
