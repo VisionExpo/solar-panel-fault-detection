@@ -189,8 +189,8 @@ class ModelOptimizer:
             tf.saved_model.save(model, str(save_path))
         elif save_format == "tflite":
             converter = tf.lite.TFLiteConverter.from_keras_model(model)
-            tflite_model = converter.convert()
-            save_path.with_suffix(".tflite").write_bytes(tflite_model)
+            converter.convert()
+            save_path.with_suffix(".tflite").write_bytes(converter.convert())
         else:
             raise ValueError(f"Unsupported save format: {save_format}")
 
