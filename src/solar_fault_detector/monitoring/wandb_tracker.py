@@ -1,5 +1,5 @@
-from typing import Dict, Optional, List
 from pathlib import Path
+from typing import Optional, Dict, List
 
 import wandb
 import numpy as np

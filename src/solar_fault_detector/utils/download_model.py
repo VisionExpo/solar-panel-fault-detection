@@ -26,17 +26,20 @@ def download_model_from_huggingface(
     try:
         from huggingface_hub import hf_hub_download
     except ImportError:
-        print("ERROR: install hf-hub: pip install huggingface-hub")
+        print(
+            "ERROR: huggingface-hub not installed. "
+            "Install with: pip install huggingface-hub"
+        )
         sys.exit(1)
 
     cache_dir.mkdir(parents=True, exist_ok=True)
     print(f"Downloading model from Hugging Face: {repo_id}/{model_filename}")
 
+    # Note: force_filename is not a valid argument for hf_hub_download
     model_path = hf_hub_download(
         repo_id=repo_id,
         filename=model_filename,
         cache_dir=str(cache_dir),
-        force_filename=model_filename,
     )
 
     model_path = Path(model_path)
