@@ -83,7 +83,7 @@ class ModelOptimizer:
         converter = tf.lite.TFLiteConverter.from_keras_model(model)
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
 
-        tflite_model = converter.convert()
+        _ = converter.convert()
 
         # Convert back to Keras for compatibility
         # Note: This is a simplified approach. In production, you might want to
@@ -113,7 +113,7 @@ class ModelOptimizer:
         converter.inference_input_type = tf.int8
         converter.inference_output_type = tf.int8
 
-        tflite_model = converter.convert()
+        _ = converter.convert()
 
         logger.info("Int8 quantization applied")
         return model  # Return original model for compatibility
@@ -130,7 +130,7 @@ class ModelOptimizer:
         converter.optimizations = [tf.lite.Optimize.DEFAULT]
         converter.target_spec.supported_types = [tf.float16]
 
-        tflite_model = converter.convert()
+        _ = converter.convert()
 
         logger.info("Float16 quantization applied")
         return model  # Return original model for compatibility
@@ -153,7 +153,7 @@ class ModelOptimizer:
         # Enable XLA compilation for faster execution
         if batch_size:
             # Set fixed batch size for better optimization
-            inputs = tf.keras.Input(
+            _ = tf.keras.Input(
                 shape=(batch_size, *self.config.img_size, self.config.num_channels),
                 dtype=tf.float32,
             )
@@ -215,12 +215,12 @@ class ModelOptimizer:
         import time
 
         # Warm up
-        _ = model.predict(test_data[:1], verbose=0)
+        _ = model(test_data[:1], training=False).numpy()
 
         times = []
         for _ in range(num_runs):
             start_time = time.time()
-            _ = model.predict(test_data, verbose=0)
+            _ = model(test_data, training=False).numpy()
             end_time = time.time()
             times.append(end_time - start_time)
 

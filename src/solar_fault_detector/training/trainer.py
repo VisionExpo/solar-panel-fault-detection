@@ -1,6 +1,3 @@
-from pathlib import Path
-from typing import Optional
-
 import tensorflow as tf
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 

@@ -23,9 +23,3 @@ __all__ = [
     "start_metrics_server",
     "RealTimeMonitor",
 ]
-
-from solar_fault_detector.monitoring.wandb_tracker import WandbTracker
-
-__all__ = [
-    "WandbTracker",
-]
