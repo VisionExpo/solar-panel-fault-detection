@@ -17,7 +17,7 @@ except ImportError:
     PROMETHEUS_AVAILABLE = False
 
     # Create dummy classes for when prometheus is not available
-    class Counter:  # type: ignore
+    class DummyCounter:
         def __init__(self, *args, **kwargs):
             pass
 
@@ -27,7 +27,7 @@ except ImportError:
         def labels(self, *args: Any, **kwargs: Any) -> "DummyCounter":
             return self
 
-    class Histogram:  # type: ignore
+    class DummyHistogram:
         def __init__(self, *args, **kwargs):
             pass
 
@@ -37,7 +37,7 @@ except ImportError:
         def labels(self, *args: Any, **kwargs: Any) -> "DummyHistogram":
             return self
 
-    class Gauge:  # type: ignore
+    class DummyGauge:
         def __init__(self, *args, **kwargs):
             pass
 

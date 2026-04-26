@@ -7,8 +7,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
 import tensorflow as tf
 
-import tensorflow as tf
-
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.inference.predictor import Predictor
 from solar_fault_detector.utils.download_model import ensure_model_exists
@@ -86,7 +84,7 @@ def health_check():
 # Inference Endpoint
 # ======================
 @app.post("/predict")
-async def predict_image(file: UploadFile = File(...)):
+def predict_image(file: UploadFile = File(...)):
     if not MODEL_READY:
         raise HTTPException(
             status_code=503,
