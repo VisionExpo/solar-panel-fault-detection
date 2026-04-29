@@ -7,9 +7,6 @@ from solar_fault_detector.models.base import BaseModel
 from solar_fault_detector.config.config import ModelConfig
 from solar_fault_detector.models.cnn import CNNModel
 
-layers = tf.keras.layers
-models = tf.keras.models
-
 
 class EnsembleModel(BaseModel):
     """
@@ -25,7 +22,7 @@ class EnsembleModel(BaseModel):
         """
         Build ensemble by instantiating multiple CNN models.
         """
-        inputs = layers.Input(
+        inputs = tf.keras.layers.Input(
             shape=(
                 self.config.img_size[0],
                 self.config.img_size[1],
@@ -40,9 +37,9 @@ class EnsembleModel(BaseModel):
             self.sub_models.append(sub_model)
             outputs.append(sub_model(inputs))
 
-        avg_output = layers.Average()(outputs)
+        avg_output = tf.keras.layers.Average()(outputs)
 
-        self.model = models.Model(inputs=inputs, outputs=avg_output)
+        self.model = tf.keras.models.Model(inputs=inputs, outputs=avg_output)
         return self.model
 
     def save(self, path: Path) -> None:

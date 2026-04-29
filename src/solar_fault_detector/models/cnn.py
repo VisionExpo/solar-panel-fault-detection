@@ -3,9 +3,6 @@ import tensorflow as tf
 from solar_fault_detector.models.base import BaseModel
 from solar_fault_detector.config.config import ModelConfig
 
-layers = tf.keras.layers
-models = tf.keras.models
-
 
 class CNNModel(BaseModel):
     """
@@ -19,7 +16,7 @@ class CNNModel(BaseModel):
         """
         Build CNN architecture.
         """
-        inputs = layers.Input(
+        inputs = tf.keras.layers.Input(
             shape=(
                 self.config.img_size[0],
                 self.config.img_size[1],
@@ -27,23 +24,25 @@ class CNNModel(BaseModel):
             )
         )
 
-        x = layers.Conv2D(32, (3, 3), activation="relu")(inputs)
-        x = layers.BatchNormalization()(x)
-        x = layers.MaxPooling2D()(x)
+        x = tf.keras.layers.Conv2D(32, (3, 3), activation="relu")(inputs)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.MaxPooling2D()(x)
 
-        x = layers.Conv2D(64, (3, 3), activation="relu")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.MaxPooling2D()(x)
+        x = tf.keras.layers.Conv2D(64, (3, 3), activation="relu")(x)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.MaxPooling2D()(x)
 
-        x = layers.Conv2D(128, (3, 3), activation="relu")(x)
-        x = layers.BatchNormalization()(x)
-        x = layers.MaxPooling2D()(x)
+        x = tf.keras.layers.Conv2D(128, (3, 3), activation="relu")(x)
+        x = tf.keras.layers.BatchNormalization()(x)
+        x = tf.keras.layers.MaxPooling2D()(x)
 
-        x = layers.Flatten()(x)
-        x = layers.Dense(256, activation="relu")(x)
-        x = layers.Dropout(0.5)(x)
+        x = tf.keras.layers.Flatten()(x)
+        x = tf.keras.layers.Dense(256, activation="relu")(x)
+        x = tf.keras.layers.Dropout(0.5)(x)
 
-        outputs = layers.Dense(self.config.num_classes, activation="softmax")(x)
+        outputs = tf.keras.layers.Dense(self.config.num_classes, activation="softmax")(
+            x
+        )
 
-        self.model = models.Model(inputs=inputs, outputs=outputs)
+        self.model = tf.keras.models.Model(inputs=inputs, outputs=outputs)
         return self.model

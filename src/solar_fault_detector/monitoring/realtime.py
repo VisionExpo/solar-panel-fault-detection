@@ -42,7 +42,7 @@ class RealTimeMonitor:
         Args:
             metrics_collector: Configured Prometheus metrics collector
             thresholds: Alert thresholds
-            alert_callback: Optional callback for custom alert routing (e.g. Slack/Email)
+            alert_callback: Optional callback for custom alert routing (e.g., Slack)
         """
         self.metrics_collector = metrics_collector
         self.thresholds = thresholds or AlertThresholds()

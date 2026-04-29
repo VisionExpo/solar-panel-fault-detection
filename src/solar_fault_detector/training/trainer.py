@@ -5,9 +5,6 @@ from solar_fault_detector.models.factory import ModelFactory
 from solar_fault_detector.training.evaluator import Evaluator
 from solar_fault_detector.monitoring.wandb_tracker import WandbTracker
 
-EarlyStopping = tf.keras.callbacks.EarlyStopping
-ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint
-
 
 class Trainer:
     """
@@ -91,7 +88,7 @@ class Trainer:
         callbacks = []
 
         callbacks.append(
-            EarlyStopping(
+            tf.keras.callbacks.EarlyStopping(
                 monitor="val_loss",
                 patience=self.config.model.early_stopping_patience,
                 restore_best_weights=True,
@@ -99,7 +96,7 @@ class Trainer:
         )
 
         callbacks.append(
-            ModelCheckpoint(
+            tf.keras.callbacks.ModelCheckpoint(
                 filepath=str(self.config.model.best_model_path),
                 monitor="val_loss",
                 save_best_only=True,
