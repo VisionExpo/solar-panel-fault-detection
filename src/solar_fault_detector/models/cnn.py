@@ -1,8 +1,10 @@
 import tensorflow as tf
-from tensorflow.keras import layers, models
 
 from solar_fault_detector.models.base import BaseModel
 from solar_fault_detector.config.config import ModelConfig
+
+layers = tf.keras.layers
+models = tf.keras.models
 
 
 class CNNModel(BaseModel):

@@ -1,10 +1,12 @@
 import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.models.factory import ModelFactory
 from solar_fault_detector.training.evaluator import Evaluator
 from solar_fault_detector.monitoring.wandb_tracker import WandbTracker
+
+EarlyStopping = tf.keras.callbacks.EarlyStopping
+ModelCheckpoint = tf.keras.callbacks.ModelCheckpoint
 
 
 class Trainer:
