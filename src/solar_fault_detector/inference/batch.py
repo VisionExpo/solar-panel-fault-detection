@@ -60,8 +60,9 @@ class BatchInferenceEngine:
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
 
-            # ModelCache needs an independent InMemoryCache instance as TF models are not JSON/pickle serializable easily
-            # and differ from predictions cache turnover rate.
+            # ModelCache needs an independent InMemoryCache instance as TF models are
+            # not JSON/pickle serializable easily and differ from predictions cache
+            # turnover rate.
             from solar_fault_detector.utils.cache import InMemoryCache
 
             self.model_cache = ModelCache(InMemoryCache())  # type: ignore
