@@ -1,5 +1,3 @@
-import numpy as np
-
 """
 Real-time monitoring and alerting system.
 
@@ -13,6 +11,8 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 import threading
 import time
+
+import numpy as np
 
 logger = logging.getLogger(__name__)
 
