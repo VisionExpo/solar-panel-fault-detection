@@ -61,7 +61,8 @@ class BatchInferenceEngine:
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
 
-            # ModelCache needs its own bounded cache since models can't be put into Redis easily
+            # ModelCache needs its own bounded cache since models
+            # can't be put into Redis easily
             self.model_cache = ModelCache(InMemoryCache(max_size=2))  # type: ignore
         else:
             self.prediction_cache = None  # type: ignore
