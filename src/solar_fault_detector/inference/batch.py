@@ -49,6 +49,7 @@ class BatchInferenceEngine:
 
         # Model cache should always be isolated, bounded, and in-memory
         from solar_fault_detector.utils.cache import InMemoryCache
+
         model_cache_backend = InMemoryCache(max_size=2)
         self.model_cache = ModelCache(model_cache_backend)  # type: ignore
 
