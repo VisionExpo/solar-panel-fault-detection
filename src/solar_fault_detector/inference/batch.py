@@ -48,13 +48,14 @@ class BatchInferenceEngine:
         self.prediction_cache: Optional[PredictionCache] = None
         self.model_cache: Optional[ModelCache] = None
 
-        # Always use isolated, strictly bounded memory cache for models
-        # to prevent severe TF memory leaks from repeated loading
+        # Use an independent bounded memory cache to prevent TF memory leaks
         from solar_fault_detector.utils.cache import InMemoryCache
 
-        self.model_cache = ModelCache(InMemoryCache(max_size=2))
+        self.model_cache = ModelCache(InMemoryCache(max_size=2))  # type: ignore
 
         if use_cache:
+            from solar_fault_detector.utils.cache import InMemoryCache
+
             cache: Any
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
@@ -64,6 +65,10 @@ class BatchInferenceEngine:
                 cache = InMemoryCache()  # type: ignore
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
+
+            from solar_fault_detector.utils.cache import InMemoryCache
+
+            self.model_cache = ModelCache(InMemoryCache())  # type: ignore
         else:
             self.prediction_cache = None  # type: ignore
 
