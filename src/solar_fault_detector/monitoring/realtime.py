@@ -1,355 +1,215 @@
-import numpy as np
-
 """
-Real-time monitoring and alerting system.
+Real-time monitoring and anomaly detection for production deployments.
 
-Provides real-time model performance monitoring, anomaly detection,
-and alerting capabilities.
+Provides latency tracking, data drift detection, and anomaly alerts.
 """
 
 import logging
 from typing import Dict, List, Any, Optional, Callable
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 import threading
 import time
+from solar_fault_detector.monitoring.metrics import MetricsCollector
 
 logger = logging.getLogger(__name__)
 
 
 @dataclass
-class AlertRule:
-    """Alert rule configuration."""
+class AlertThresholds:
+    """Thresholds for triggering monitoring alerts."""
 
-    name: str
-    metric: str
-    condition: str  # e.g., ">", "<", "==", "!="
-    threshold: float
-    duration_minutes: int = 5
-    cooldown_minutes: int = 60
-
-
-@dataclass
-class Alert:
-    """Alert instance."""
-
-    rule_name: str
-    message: str
-    severity: str  # "low", "medium", "high", "critical"
-    timestamp: datetime
-    value: float
-    threshold: float
+    latency_p95_ms: float = 500.0
+    error_rate_percent: float = 5.0
+    confidence_drop_percent: float = 10.0
+    memory_usage_percent: float = 90.0
 
 
 class RealTimeMonitor:
     """
-    Real-time monitoring system for model performance.
-
-    Features:
-    - Real-time metric collection
-    - Anomaly detection
-    - Alerting system
-    - Performance dashboards
+    Real-time monitoring system for production deployments.
     """
 
-    def __init__(self, metrics_collector: Any = None):
+    def __init__(
+        self,
+        metrics_collector: MetricsCollector,
+        thresholds: Optional[AlertThresholds] = None,
+        alert_callback: Optional[Callable[[str, str], None]] = None,
+    ):
         """
         Initialize real-time monitor.
 
         Args:
-            metrics_collector: MetricsCollector instance for Prometheus integration
+            metrics_collector: Configured Prometheus metrics collector
+            thresholds: Alert thresholds
+            alert_callback: Optional callback for custom alert routing (e.g., Slack)
         """
         self.metrics_collector = metrics_collector
-        self.alert_rules: List[AlertRule] = []
-        self.active_alerts: List[Alert] = []
-        self.metric_history: Dict[str, List] = {}
-        self.alert_callbacks: List[Callable] = []
+        self.thresholds = thresholds or AlertThresholds()
+        self.alert_callback = alert_callback
 
-        # Monitoring state
-        self.is_monitoring = False
-        self.monitor_thread: Optional[threading.Thread] = None
+        # Real-time state
+        self._recent_latencies: List[float] = []
+        self._recent_errors: int = 0
+        self._total_requests: int = 0
+        self._baseline_confidence: float = 0.85
+        self._recent_confidences: List[float] = []
 
-        # Anomaly detection
-        self.anomaly_detector = AnomalyDetector()
+        # Lock for thread safety
+        self._lock = threading.Lock()
 
-    def add_alert_rule(self, rule: AlertRule) -> None:
-        """
-        Add an alert rule.
+        # Background monitoring thread
+        self._running = False
+        self._monitor_thread: Optional[threading.Thread] = None
 
-        Args:
-            rule: AlertRule configuration
-        """
-        self.alert_rules.append(rule)
-        logger.info(f"Added alert rule: {rule.name}")
+    def start(self) -> None:
+        """Start background monitoring thread."""
+        if self._running:
+            return
 
-    def add_alert_callback(self, callback: Callable) -> None:
-        """
-        Add callback function for alerts.
-
-        Args:
-            callback: Function to call when alert is triggered
-        """
-        self.alert_callbacks.append(callback)
-
-    def record_metric(
-        self, metric_name: str, value: float, labels: Optional[Dict] = None
-    ) -> None:
-        """
-        Record a metric value.
-
-        Args:
-            metric_name: Name of the metric
-            value: Metric value
-            labels: Optional labels for the metric
-        """
-        timestamp = datetime.now()
-
-        if metric_name not in self.metric_history:
-            self.metric_history[metric_name] = []
-
-        self.metric_history[metric_name].append(
-            {"value": value, "timestamp": timestamp, "labels": labels or {}}
+        self._running = True
+        self._monitor_thread = threading.Thread(
+            target=self._monitoring_loop, daemon=True
         )
+        self._monitor_thread.start()
+        logger.info("Real-time monitor started")
 
-        # Keep only last 1000 values per metric
-        if len(self.metric_history[metric_name]) > 1000:
-            self.metric_history[metric_name] = self.metric_history[metric_name][-1000:]
+    def stop(self) -> None:
+        """Stop background monitoring thread."""
+        self._running = False
+        if self._monitor_thread:
+            self._monitor_thread.join(timeout=2.0)
+            logger.info("Real-time monitor stopped")
 
-        # Check alert rules
-        self._check_alerts(metric_name, value)
+    def record_inference(
+        self, latency_ms: float, confidence: float, is_error: bool = False
+    ) -> None:
+        """Record a single inference event."""
+        with self._lock:
+            self._total_requests += 1
 
-        # Update Prometheus metrics if available
-        if self.metrics_collector:
-            if metric_name == "prediction_latency":
-                self.metrics_collector.prediction_duration.labels(
-                    model_type="realtime"
-                ).observe(value)
-            elif metric_name == "prediction_confidence":
-                self.metrics_collector.prediction_confidence.labels(
-                    model_type="realtime"
-                ).observe(value)
+            if is_error:
+                self._recent_errors += 1
+                return
 
-    def _check_alerts(self, metric_name: str, value: float) -> None:
-        """Check if any alert rules are triggered."""
-        for rule in self.alert_rules:
-            if rule.metric != metric_name:
-                continue
+            self._recent_latencies.append(latency_ms)
+            self._recent_confidences.append(confidence)
 
-            # Check if condition is met
-            triggered = self._evaluate_condition(value, rule.condition, rule.threshold)
+            # Keep only recent history (e.g., last 1000 requests)
+            if len(self._recent_latencies) > 1000:
+                self._recent_latencies.pop(0)
+            if len(self._recent_confidences) > 1000:
+                self._recent_confidences.pop(0)
 
-            if triggered:
-                # Check if alert is already active (cooldown)
-                active_alert = next(
-                    (a for a in self.active_alerts if a.rule_name == rule.name), None
+    def _monitoring_loop(self) -> None:
+        """Background loop evaluating thresholds and triggering alerts."""
+        while self._running:
+            self._evaluate_thresholds()
+            self._update_system_metrics()
+            time.sleep(60)  # Check every minute
+
+    def _evaluate_thresholds(self) -> None:
+        """Evaluate current metrics against thresholds."""
+        with self._lock:
+            if not self._total_requests:
+                return
+
+            # 1. Latency Check (P95)
+            if len(self._recent_latencies) >= 10:
+                import numpy as np
+
+                p95_latency = float(np.percentile(self._recent_latencies, 95))
+                if p95_latency > self.thresholds.latency_p95_ms:
+                    self._trigger_alert(
+                        "High Latency",
+                        f"P95 latency ({p95_latency:.1f}ms) "
+                        f"exceeds threshold ({self.thresholds.latency_p95_ms}ms)",
+                    )
+
+            # 2. Error Rate Check
+            error_rate = (self._recent_errors / max(1, self._total_requests)) * 100
+            if error_rate > self.thresholds.error_rate_percent:
+                self._trigger_alert(
+                    "High Error Rate",
+                    f"Error rate ({error_rate:.1f}%) "
+                    f"exceeds threshold ({self.thresholds.error_rate_percent}%)",
                 )
 
-                if active_alert:
-                    # Check cooldown
-                    time_since_alert = datetime.now() - active_alert.timestamp
-                    if time_since_alert < timedelta(minutes=rule.cooldown_minutes):
-                        continue
+            # 3. Confidence Drop (Data Drift Indicator)
+            if len(self._recent_confidences) >= 50:
+                import numpy as np
 
-                # Check duration requirement
-                if self._check_duration_rule(rule, value):
-                    self._trigger_alert(rule, value)
+                avg_confidence = float(np.mean(self._recent_confidences))
+                drop_percent = (
+                    (self._baseline_confidence - avg_confidence)
+                    / self._baseline_confidence
+                ) * 100
 
-    def _evaluate_condition(
-        self, value: float, condition: str, threshold: float
-    ) -> bool:
-        """Evaluate alert condition."""
-        if condition == ">":
-            return value > threshold
-        elif condition == "<":
-            return value < threshold
-        elif condition == ">=":
-            return value >= threshold
-        elif condition == "<=":
-            return value <= threshold
-        elif condition == "==":
-            return abs(value - threshold) < 1e-6
-        elif condition == "!=":
-            return abs(value - threshold) >= 1e-6
-        else:
-            logger.warning(f"Unknown condition: {condition}")
-            return False
+                if drop_percent > self.thresholds.confidence_drop_percent:
+                    self._trigger_alert(
+                        "Potential Data Drift",
+                        f"Average confidence dropped by {drop_percent:.1f}% "
+                        f"(Current: {avg_confidence:.2f}, "
+                        f"Baseline: {self._baseline_confidence:.2f})",
+                    )
 
-    def _check_duration_rule(self, rule: AlertRule, current_value: float) -> bool:
-        """Check if alert condition has been met for the required duration."""
-        if rule.duration_minutes == 0:
-            return True
+            # Reset short-term counters
+            self._recent_errors = 0
+            self._total_requests = 0
 
-        metric_data = self.metric_history.get(rule.metric, [])
-        if not metric_data:
-            return False
+    def _update_system_metrics(self) -> None:
+        """Update system metrics and check memory thresholds."""
+        try:
+            import psutil
 
-        # Check recent values within duration window
-        cutoff_time = datetime.now() - timedelta(minutes=rule.duration_minutes)
-        recent_values = [
-            entry["value"] for entry in metric_data if entry["timestamp"] > cutoff_time
-        ]
+            memory = psutil.virtual_memory()
+            if memory.percent > self.thresholds.memory_usage_percent:
+                self._trigger_alert(
+                    "High Memory Usage",
+                    f"Memory usage ({memory.percent}%) "
+                    f"exceeds threshold ({self.thresholds.memory_usage_percent}%)",
+                )
 
-        # All recent values must meet the condition
-        return all(
-            self._evaluate_condition(v, rule.condition, rule.threshold)
-            for v in recent_values
-        )
+            # Update Prometheus
+            self.metrics_collector.update_system_metrics()
 
-    def _trigger_alert(self, rule: AlertRule, value: float) -> None:
-        """Trigger an alert."""
-        severity = self._determine_severity(rule, value)
+        except ImportError:
+            pass
 
-        alert_msg = (
-            f"Alert triggered: {rule.metric} {rule.condition} "
-            f"{rule.threshold} (current: {value})"
-        )
-        alert = Alert(
-            rule_name=rule.name,
-            message=alert_msg,
-            severity=severity,
-            timestamp=datetime.now(),
-            value=value,
-            threshold=rule.threshold,
-        )
+    def _trigger_alert(self, alert_type: str, message: str) -> None:
+        """Trigger an alert via logging and optional callback."""
+        logger.warning(f"🚨 ALERT [{alert_type}]: {message}")
 
-        self.active_alerts.append(alert)
-
-        # Call alert callbacks
-        for callback in self.alert_callbacks:
+        if self.alert_callback:
             try:
-                callback(alert)
+                self.alert_callback(alert_type, message)
             except Exception as e:
                 logger.error(f"Alert callback failed: {e}")
 
-        logger.warning(f"ALERT: {alert.message} (severity: {severity})")
+    def get_realtime_stats(self) -> Dict[str, Any]:
+        """Get current real-time statistics."""
+        with self._lock:
+            import numpy as np
 
-    def _determine_severity(self, rule: AlertRule, value: float) -> str:
-        """Determine alert severity based on rule and value."""
-        deviation = abs(value - rule.threshold) / rule.threshold
+            stats = {
+                "total_requests": self._total_requests,
+                "recent_errors": self._recent_errors,
+                "current_time": datetime.now().isoformat(),
+            }
 
-        if deviation > 1.0:
-            return "critical"
-        elif deviation > 0.5:
-            return "high"
-        elif deviation > 0.2:
-            return "medium"
-        else:
-            return "low"
+            if self._recent_latencies:
+                stats.update(
+                    {
+                        "avg_latency_ms": float(np.mean(self._recent_latencies)),
+                        "p95_latency_ms": float(
+                            np.percentile(self._recent_latencies, 95)
+                        ),
+                    }
+                )
 
-    def start_monitoring(self, interval_seconds: int = 60) -> None:
-        """
-        Start real-time monitoring in background thread.
+            if self._recent_confidences:
+                stats.update(
+                    {"avg_confidence": float(np.mean(self._recent_confidences))}
+                )
 
-        Args:
-            interval_seconds: Monitoring interval
-        """
-        if self.is_monitoring:
-            return
-
-        self.is_monitoring = True
-        self.monitor_thread = threading.Thread(
-            target=self._monitoring_loop, args=(interval_seconds,), daemon=True
-        )
-        self.monitor_thread.start()
-        logger.info("Real-time monitoring started")
-
-    def stop_monitoring(self) -> None:
-        """Stop real-time monitoring."""
-        self.is_monitoring = False
-        if self.monitor_thread:
-            self.monitor_thread.join(timeout=5)
-        logger.info("Real-time monitoring stopped")
-
-    def _monitoring_loop(self, interval_seconds: int) -> None:
-        """Main monitoring loop."""
-        while self.is_monitoring:
-            try:
-                self._perform_monitoring_checks()
-            except Exception as e:
-                logger.error(f"Monitoring check failed: {e}")
-
-            time.sleep(interval_seconds)
-
-    def _perform_monitoring_checks(self) -> None:
-        """Perform periodic monitoring checks."""
-        # Update system metrics
-        if self.metrics_collector:
-            self.metrics_collector.update_system_metrics()
-
-        # Check for anomalies
-        for metric_name, history in self.metric_history.items():
-            if len(history) < 10:  # Need minimum history
-                continue
-
-            recent_values = [entry["value"] for entry in history[-10:]]
-            if self.anomaly_detector.detect_anomaly(recent_values):
-                self.record_metric(f"{metric_name}_anomaly", 1.0)
-
-    def get_monitoring_status(self) -> Dict[str, Any]:
-        """
-        Get current monitoring status.
-
-        Returns:
-            Dictionary with monitoring information
-        """
-        return {
-            "is_monitoring": self.is_monitoring,
-            "active_alerts": len(self.active_alerts),
-            "alert_rules": len(self.alert_rules),
-            "monitored_metrics": list(self.metric_history.keys()),
-            "total_metric_points": sum(
-                len(history) for history in self.metric_history.values()
-            ),
-        }
-
-    def get_recent_alerts(self, hours: int = 24) -> List[Alert]:
-        """
-        Get recent alerts.
-
-        Args:
-            hours: Number of hours to look back
-
-        Returns:
-            List of recent alerts
-        """
-        cutoff_time = datetime.now() - timedelta(hours=hours)
-        return [alert for alert in self.active_alerts if alert.timestamp > cutoff_time]
-
-
-class AnomalyDetector:
-    """
-    Simple anomaly detection using statistical methods.
-    """
-
-    def __init__(self, threshold_sigma: float = 3.0):
-        """
-        Initialize anomaly detector.
-
-        Args:
-            threshold_sigma: Standard deviation threshold for anomalies
-        """
-        self.threshold_sigma = threshold_sigma
-
-    def detect_anomaly(self, values: List[float]) -> bool:
-        """
-        Detect if the latest value is anomalous.
-
-        Args:
-            values: List of recent values
-
-        Returns:
-            True if anomalous
-        """
-        if len(values) < 5:
-            return False
-
-        mean = np.mean(values[:-1])  # Exclude latest value
-        std = np.std(values[:-1])
-
-        if std == 0:
-            return False
-
-        latest_value = values[-1]
-        z_score = abs(latest_value - mean) / std
-
-        return bool(z_score > self.threshold_sigma)
+            return stats

@@ -60,8 +60,6 @@ class BatchInferenceEngine:
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
 
-            # Explicitly configure ModelCache to use InMemoryCache independently
-            # to prevent continuous eviction and reloading of TensorFlow models
             from solar_fault_detector.utils.cache import InMemoryCache
 
             self.model_cache = ModelCache(InMemoryCache())  # type: ignore
