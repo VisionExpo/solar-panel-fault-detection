@@ -48,14 +48,14 @@ class BatchInferenceEngine:
         self.prediction_cache: Optional[PredictionCache] = None
         self.model_cache: Optional[ModelCache] = None
         if use_cache:
+            from solar_fault_detector.utils.cache import InMemoryCache
+
             cache: Any
             if cache_backend == "redis":
                 from solar_fault_detector.utils.cache import RedisCache
 
                 cache = RedisCache()  # type: ignore
             else:
-                from solar_fault_detector.utils.cache import InMemoryCache
-
                 cache = InMemoryCache()  # type: ignore
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
