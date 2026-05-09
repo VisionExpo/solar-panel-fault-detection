@@ -12,8 +12,6 @@ import threading
 import time
 from solar_fault_detector.monitoring.metrics import MetricsCollector
 
-import numpy as np
-
 logger = logging.getLogger(__name__)
 
 
