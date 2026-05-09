@@ -1,5 +1,4 @@
 import tensorflow as tf
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 from solar_fault_detector.config.config import Config
 from solar_fault_detector.models.factory import ModelFactory
@@ -89,7 +88,7 @@ class Trainer:
         callbacks = []
 
         callbacks.append(
-            EarlyStopping(
+            tf.keras.callbacks.EarlyStopping(
                 monitor="val_loss",
                 patience=self.config.model.early_stopping_patience,
                 restore_best_weights=True,
@@ -97,7 +96,7 @@ class Trainer:
         )
 
         callbacks.append(
-            ModelCheckpoint(
+            tf.keras.callbacks.ModelCheckpoint(
                 filepath=str(self.config.model.best_model_path),
                 monitor="val_loss",
                 save_best_only=True,
