@@ -183,7 +183,7 @@ class PredictionCache:
             cache_backend: Cache implementation (defaults to InMemoryCache)
             ttl: Time to live in seconds
         """
-        self.cache = cache_backend or InMemoryCache()
+        self.cache = cache_backend or InMemoryCache(max_size=1000)
         self.ttl = ttl
 
     def _compute_image_hash(self, image_array: np.ndarray) -> str:
@@ -228,7 +228,7 @@ class ModelCache:
     """
 
     def __init__(self, cache_backend: Optional[Cache] = None):
-        self.cache = cache_backend or InMemoryCache()
+        self.cache = cache_backend or InMemoryCache(max_size=2)
 
     def get_model(self, model_path: Union[str, Path]) -> Optional[Any]:
         """Get cached model."""
