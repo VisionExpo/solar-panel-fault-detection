@@ -68,7 +68,7 @@ class BatchInferenceEngine:
 
             from solar_fault_detector.utils.cache import InMemoryCache
 
-            self.model_cache = ModelCache(InMemoryCache())  # type: ignore
+            self.model_cache = ModelCache(InMemoryCache(max_size=2))  # type: ignore
         else:
             self.prediction_cache = None  # type: ignore
 
