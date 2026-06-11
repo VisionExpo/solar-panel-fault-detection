@@ -29,16 +29,16 @@ class Evaluator:
         """
         Evaluate model and return metrics.
         """
-        y_true = []
-        y_pred = []
+        y_true_list = []
+        y_pred_list = []
 
         for batch_x, batch_y in dataset:
             preds = model(batch_x, training=False).numpy()
-            y_true.append(np.argmax(batch_y, axis=1))
-            y_pred.append(np.argmax(preds, axis=1))
+            y_true_list.append(np.argmax(batch_y, axis=1))
+            y_pred_list.append(np.argmax(preds, axis=1))
 
-        y_true = np.concatenate(y_true) if y_true else np.array([])
-        y_pred = np.concatenate(y_pred) if y_pred else np.array([])
+        y_true = np.concatenate(y_true_list) if y_true_list else np.array([])
+        y_pred = np.concatenate(y_pred_list) if y_pred_list else np.array([])
 
         accuracy = accuracy_score(y_true, y_pred)
         precision, recall, f1, _ = precision_recall_fscore_support(
@@ -61,15 +61,15 @@ class Evaluator:
         """
         Compute confusion matrix.
         """
-        y_true = []
-        y_pred = []
+        y_true_list = []
+        y_pred_list = []
 
         for batch_x, batch_y in dataset:
             preds = model(batch_x, training=False).numpy()
-            y_true.append(np.argmax(batch_y, axis=1))
-            y_pred.append(np.argmax(preds, axis=1))
+            y_true_list.append(np.argmax(batch_y, axis=1))
+            y_pred_list.append(np.argmax(preds, axis=1))
 
-        y_true = np.concatenate(y_true) if y_true else np.array([])
-        y_pred = np.concatenate(y_pred) if y_pred else np.array([])
+        y_true = np.concatenate(y_true_list) if y_true_list else np.array([])
+        y_pred = np.concatenate(y_pred_list) if y_pred_list else np.array([])
 
         return confusion_matrix(y_true, y_pred)
