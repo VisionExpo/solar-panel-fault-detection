@@ -62,10 +62,9 @@ class BatchInferenceEngine:
 
                 cache = RedisCache()  # type: ignore
             else:
-                cache = InMemoryCache()  # type: ignore
+                cache = InMemoryCache(max_size=1000)  # type: ignore
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
-
         else:
             self.prediction_cache = None  # type: ignore
 
