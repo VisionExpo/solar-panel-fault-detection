@@ -183,7 +183,7 @@ class PredictionCache:
             cache_backend: Cache implementation (defaults to InMemoryCache)
             ttl: Time to live in seconds
         """
-        self.cache = cache_backend or InMemoryCache()
+        self.cache = cache_backend or InMemoryCache(max_size=1000)
         self.ttl = ttl
 
     def _compute_image_hash(self, image_array: np.ndarray) -> str:
