@@ -65,8 +65,6 @@ class BatchInferenceEngine:
                 cache = InMemoryCache(max_size=1000)  # type: ignore
 
             self.prediction_cache = PredictionCache(cache)  # type: ignore
-
-            self.model_cache = ModelCache()  # type: ignore
         else:
             self.prediction_cache = None  # type: ignore
 
