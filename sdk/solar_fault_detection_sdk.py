@@ -250,22 +250,24 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
         Returns:
             Prediction results dictionary
         """
+        import asyncio
         await self._ensure_session()
 
         image_path = Path(image_path)
         if not image_path.exists():
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        with open(image_path, 'rb') as f:
-            data = aiohttp.FormData()
-            data.add_field('file', f, filename=image_path.name)
+        file_bytes = await asyncio.to_thread(image_path.read_bytes)
 
-            async with self._async_session.post(
-                f"{self.base_url}/predict",
-                data=data
-            ) as response:
-                response.raise_for_status()
-                return await response.json()
+        data = aiohttp.FormData()
+        data.add_field('file', file_bytes, filename=image_path.name)
+
+        async with self._async_session.post(
+            f"{self.base_url}/predict",
+            data=data
+        ) as response:
+            response.raise_for_status()
+            return await response.json()
 
     async def close(self):
         """Close the async session."""
