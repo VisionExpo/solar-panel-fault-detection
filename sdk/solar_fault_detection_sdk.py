@@ -5,12 +5,12 @@ A Python SDK for interacting with the Solar Panel Fault Detection REST API.
 Provides easy-to-use methods for prediction, batch processing, and monitoring.
 """
 
-import requests
 import json
 from typing import Dict, List, Union, Optional, Any
 from pathlib import Path
 import logging
 import time
+import asyncio
 
 logger = logging.getLogger(__name__)
 
@@ -46,25 +46,27 @@ class SolarFaultDetectionClient:
         self.api_key = api_key
         self.timeout = timeout
         self.retries = retries
-        self.session = requests.Session()
 
-        # Set default headers
-        self.session.headers.update({
-            'Content-Type': 'application/json',
-            'User-Agent': 'SolarFaultDetection-SDK/1.0'
-        })
+        try:
+            import requests
+            self.session = requests.Session()
+            # Set default headers
+            self.session.headers.update({
+                'Content-Type': 'application/json',
+                'User-Agent': 'SolarFaultDetection-SDK/1.0'
+            })
 
-        if api_key:
-            self.session.headers.update({'Authorization': f'Bearer {api_key}'})
-
-        logger.info(f"Initialized client for {base_url}")
+            if api_key:
+                self.session.headers.update({'Authorization': f'Bearer {api_key}'})
+        except ImportError:
+            self.session = None
 
     def _make_request(
         self,
         method: str,
         endpoint: str,
         **kwargs
-    ) -> requests.Response:
+    ) -> Any:
         """
         Make HTTP request with retry logic.
 
@@ -77,8 +79,13 @@ class SolarFaultDetectionClient:
             Response object
 
         Raises:
-            requests.RequestException: If request fails after retries
+            Exception: If request fails after retries
         """
+        import requests
+
+        if self.session is None:
+            raise ImportError("requests module is required for synchronous client")
+
         url = f"{self.base_url}{endpoint}"
 
         for attempt in range(self.retries):
@@ -230,8 +237,15 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
         if self._async_session is None:
             try:
                 import aiohttp
+                headers = self.session.headers.copy() if self.session else {
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'SolarFaultDetection-SDK/1.0'
+                }
+                if self.api_key and not self.session:
+                    headers['Authorization'] = f'Bearer {self.api_key}'
+
                 self._async_session = aiohttp.ClientSession(
-                    headers=self.session.headers.copy(),
+                    headers=headers,
                     timeout=aiohttp.ClientTimeout(total=self.timeout)
                 )
             except ImportError:
@@ -250,22 +264,24 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
         Returns:
             Prediction results dictionary
         """
+        import asyncio
         await self._ensure_session()
 
         image_path = Path(image_path)
         if not image_path.exists():
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        with open(image_path, 'rb') as f:
-            data = aiohttp.FormData()
-            data.add_field('file', f, filename=image_path.name)
+        file_bytes = await asyncio.to_thread(image_path.read_bytes)
 
-            async with self._async_session.post(
-                f"{self.base_url}/predict",
-                data=data
-            ) as response:
-                response.raise_for_status()
-                return await response.json()
+        data = aiohttp.FormData()
+        data.add_field('file', file_bytes, filename=image_path.name)
+
+        async with self._async_session.post(
+            f"{self.base_url}/predict",
+            data=data
+        ) as response:
+            response.raise_for_status()
+            return await response.json()
 
     async def close(self):
         """Close the async session."""
