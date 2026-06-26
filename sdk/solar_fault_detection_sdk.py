@@ -264,14 +264,13 @@ class AsyncSolarFaultDetectionClient(SolarFaultDetectionClient):
         Returns:
             Prediction results dictionary
         """
-        import aiohttp
+        import asyncio
         await self._ensure_session()
 
         image_path = Path(image_path)
         if not image_path.exists():
             raise FileNotFoundError(f"Image not found: {image_path}")
 
-        # Read file asynchronously to avoid blocking the event loop
         file_bytes = await asyncio.to_thread(image_path.read_bytes)
 
         data = aiohttp.FormData()
