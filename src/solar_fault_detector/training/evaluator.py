@@ -29,8 +29,8 @@ class Evaluator:
         """
         Evaluate model and return metrics.
         """
-        y_true = []
-        y_pred = []
+        y_true_list = []
+        y_pred_list = []
 
         for batch_x, batch_y in dataset:
             preds = model(batch_x, training=False).numpy()
@@ -61,8 +61,8 @@ class Evaluator:
         """
         Compute confusion matrix.
         """
-        y_true = []
-        y_pred = []
+        y_true_list = []
+        y_pred_list = []
 
         for batch_x, batch_y in dataset:
             preds = model(batch_x, training=False).numpy()
