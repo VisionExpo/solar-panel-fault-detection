@@ -39,28 +39,28 @@ if uploaded_file:
     if uploaded_file.type not in ALLOWED_MIME_TYPES:
         st.error("Unsupported file type.")
     else:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", use_column_width=True)
+        with Image.open(uploaded_file) as image:
+            st.image(image, caption="Uploaded Image", use_column_width=True)
 
-        if st.button("Run Inference"):
-            with st.spinner("Running inference..."):
-                response = requests.post(
-                    f"{API_URL}/predict",
-                    files={"file": uploaded_file.getvalue()},
-                )
+            if st.button("Run Inference"):
+                with st.spinner("Running inference..."):
+                    response = requests.post(
+                        f"{API_URL}/predict",
+                        files={"file": uploaded_file.getvalue()},
+                    )
 
-            if response.status_code == 200:
-                result = response.json()
+                if response.status_code == 200:
+                    result = response.json()
 
-                st.success("Prediction complete")
+                    st.success("Prediction complete")
 
-                st.write(f"**Predicted Class:** {result['predicted_class']}")
-                st.write(f"**Confidence:** {result['confidence']:.2f}")
+                    st.write(f"**Predicted Class:** {result['predicted_class']}")
+                    st.write(f"**Confidence:** {result['confidence']:.2f}")
 
-                with st.expander("Class Probabilities"):
-                    st.json(result["probabilities"])
-            else:
-                st.error(f"API Error: {response.text}")
+                    with st.expander("Class Probabilities"):
+                        st.json(result["probabilities"])
+                else:
+                    st.error(f"API Error: {response.text}")
 
 # ======================
 # Auto Refresh
