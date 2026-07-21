@@ -39,7 +39,10 @@ if uploaded_file:
     if uploaded_file.type not in ALLOWED_MIME_TYPES:
         st.error("Unsupported file type.")
     else:
-        image = Image.open(uploaded_file)
+        with Image.open(uploaded_file) as img:
+            image = img.copy()
+            image.load()
+
         st.image(image, caption="Uploaded Image", use_column_width=True)
 
         if st.button("Run Inference"):
