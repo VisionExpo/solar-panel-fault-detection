@@ -29,20 +29,23 @@ class Evaluator:
         """
         Evaluate model and return metrics.
         """
-        y_true_list = []
-        y_pred_list = []
+        true_labels_list = []
+        pred_labels_list = []
 
         for batch_x, batch_y in dataset:
             preds = model(batch_x, training=False).numpy()
-            y_true.append(np.argmax(batch_y, axis=1))
-            y_pred.append(np.argmax(preds, axis=1))
+            true_labels_list.append(np.argmax(batch_y, axis=1))
+            pred_labels_list.append(np.argmax(preds, axis=1))
 
-        y_true = np.concatenate(y_true)
-        y_pred = np.concatenate(y_pred)
+        y_true_arr = np.concatenate(true_labels_list)
+        y_pred_arr = np.concatenate(pred_labels_list)
 
-        accuracy = accuracy_score(y_true, y_pred)
+        del true_labels_list
+        del pred_labels_list
+
+        accuracy = accuracy_score(y_true_arr, y_pred_arr)
         precision, recall, f1, _ = precision_recall_fscore_support(
-            y_true, y_pred, average="weighted", zero_division=0
+            y_true_arr, y_pred_arr, average="weighted", zero_division=0
         )
 
         metrics = {
@@ -61,15 +64,18 @@ class Evaluator:
         """
         Compute confusion matrix.
         """
-        y_true_list = []
-        y_pred_list = []
+        true_labels_list = []
+        pred_labels_list = []
 
         for batch_x, batch_y in dataset:
             preds = model(batch_x, training=False).numpy()
-            y_true.append(np.argmax(batch_y, axis=1))
-            y_pred.append(np.argmax(preds, axis=1))
+            true_labels_list.append(np.argmax(batch_y, axis=1))
+            pred_labels_list.append(np.argmax(preds, axis=1))
 
-        y_true = np.concatenate(y_true)
-        y_pred = np.concatenate(y_pred)
+        y_true_arr = np.concatenate(true_labels_list)
+        y_pred_arr = np.concatenate(pred_labels_list)
 
-        return confusion_matrix(y_true, y_pred)
+        del true_labels_list
+        del pred_labels_list
+
+        return confusion_matrix(y_true_arr, y_pred_arr)
