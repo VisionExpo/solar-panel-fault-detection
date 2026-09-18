@@ -12,7 +12,9 @@ class ImagePreprocessor:
             self.target_size = config.img_size
 
     def load_and_preprocess(self, image_path: Path) -> tf.Tensor:
-        image = Image.open(image_path).convert("RGB")
+        with Image.open(image_path) as img:
+            img.load()
+            image = img.convert("RGB")
         image = image.resize(self.target_size)
         image_array = np.array(image) / 255.0
         return tf.convert_to_tensor(image_array, dtype=tf.float32)
