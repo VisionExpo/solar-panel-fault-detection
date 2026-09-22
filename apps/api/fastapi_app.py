@@ -63,7 +63,7 @@ try:
     logger.info("✅ Model loaded successfully")
 except Exception as e:
     logger.error(f"❌ Failed to load model: {e}")
-    predictor = None
+    predictor = None  # type: ignore
     MODEL_READY = False
 
 ALLOWED_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png"}
