@@ -102,7 +102,7 @@ class RedisCache(Cache):
                 f"Redis connection failed: {e}. Falling back to InMemoryCache"
             )
             self.redis = None
-            self.fallback_cache = InMemoryCache()
+            self.fallback_cache = InMemoryCache(max_size=1000)
 
     def get(self, key: str) -> Optional[Any]:
         if self.redis:
