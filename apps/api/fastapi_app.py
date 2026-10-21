@@ -2,6 +2,7 @@ from pathlib import Path
 import shutil
 import uuid
 import logging
+from typing import Optional
 
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.responses import JSONResponse
@@ -55,7 +56,7 @@ try:
     MODEL_PATH = ensure_model_exists(config.model.best_model_path)
     logger.info(f"Loading model from: {MODEL_PATH}")
 
-    predictor = Predictor(
+    predictor: Optional[Predictor] = Predictor(
         model_path=MODEL_PATH,
         config=config.model,
     )
@@ -105,13 +106,15 @@ def predict_image(file: UploadFile = File(...)):
         with temp_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
 
-        prediction = predictor.predict(temp_path)
-        return JSONResponse(content=prediction)
+        if predictor is not None:
+            prediction = predictor.predict(temp_path)
+            return JSONResponse(content=prediction)
+        else:
+            raise HTTPException(status_code=503, detail="Predictor is not initialized.")
 
     except Exception as e:
         logger.error(f"Prediction failed: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:
-        if temp_path.exists():
-            temp_path.unlink()
+        temp_path.unlink(missing_ok=True)
