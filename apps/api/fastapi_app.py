@@ -113,5 +113,4 @@ def predict_image(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail="Internal server error")
 
     finally:
-        if temp_path.exists():
-            temp_path.unlink()
+        temp_path.unlink(missing_ok=True)
